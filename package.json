@@ -1,0 +1,25 @@
+{
+  "name": "panic-button-escolar",
+  "version": "1.0.0",
+  "description": "Sistema de botón de pánico para colegios con WebSockets",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "panic-button",
+    "emergency",
+    "websocket",
+    "school"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0f172a">
+  <title>🚨 Botón de Pánico Escolar</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+    
+    /* Pantalla de registro */
+    #registerScreen { position: fixed; inset: 0; background: #0f172a; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    #registerScreen h2 { font-size: 1.8rem; margin-bottom: 10px; }
+    #registerScreen p { color: #64748b; margin-bottom: 25px; font-size: 0.95rem; text-align: center; max-width: 300px; }
+    #nameInput { width: 100%; max-width: 320px; padding: 16px; background: #1e293b; border: 2px solid #334155; border-radius: 12px; color: #e2e8f0; font-size: 1.1rem; text-align: center; outline: none; transition: border-color 0.2s; }
+    #nameInput:focus { border-color: #3b82f6; }
+    .btn-enter { margin-top: 20px; width: 100%; max-width: 320px; padding: 16px; background: #3b82f6; color: white; border: none; border-radius: 12px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+    .btn-enter:hover { background: #2563eb; }
+    .btn-enter:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* App principal */
+    #appMain { display: none; padding: 20px; max-width: 600px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 25px; padding-bottom: 20px; border-bottom: 1px solid #1e293b; }
+    .header h1 { font-size: 1.6rem; margin-bottom: 10px; }
+    .user-badge { display: inline-block; background: #1e293b; padding: 8px 16px; border-radius: 20px; font-size: 0.9rem; }
+    .user-badge span { color: #3b82f6; font-weight: 600; }
+    .connection-status { display: inline-block; margin-left: 10px; width: 8px; height: 8px; border-radius: 50%; background: #10b981; animation: pulse 2s infinite; }
+    .connection-status.disconnected { background: #ef4444; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 10px; margin-bottom: 25px; }
+    .tab { flex: 1; padding: 12px; border: none; background: #1e293b; color: #94a3b8; font-weight: 600; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .tab:hover { background: #334155; }
+    .tab.active { background: #3b82f6; color: white; }
+
+    /* Paneles */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* Botones de pánico */
+    .btn-group { display: flex; flex-direction: column; gap: 20px; align-items: center; margin: 30px 0; }
+    .panic-btn { width: 240px; height: 240px; border-radius: 50%; border: none; color: white; font-size: 1.4rem; font-weight: 800; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.3; transition: transform 0.1s, box-shadow 0.2s; box-shadow: 0 10px 40px rgba(0,0,0,0.3); }
+    .panic-btn:active { transform: scale(0.92); }
+    .panic-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn-urgente { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); border: 6px solid #fca5a5; box-shadow: 0 0 50px rgba(239,68,68,0.4); }
+    .btn-urgente:hover { box-shadow: 0 0 60px rgba(239,68,68,0.5); }
+    .btn-alerta { background: radial-gradient(circle at 30% 30%, #f59e0b, #b45309); border: 6px solid #fde68a; box-shadow: 0 0 50px rgba(245,158,11,0.4); width: 200px; height: 200px; }
+    .btn-alerta:hover { box-shadow: 0 0 60px rgba(245,158,11,0.5); }
+
+    .status-msg { text-align: center; font-size: 1.8rem; font-weight: 800; margin: 20px 0; min-height: 50px; }
+    .status-msg.urgente { color: #ef4444; animation: pulse 1s infinite; }
+    .status-msg.alerta { color: #f59e0b; animation: pulse 1s infinite; }
+
+    /* Alertas */
+    .alerts-container { margin-top: 20px; }
+    .alert-card { background: #1e293b; border-left: 5px solid #ef4444; padding: 18px; margin-bottom: 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; animation: slideIn 0.3s ease-out; }
+    .alert-card.tipo-alerta { border-left-color: #f59e0b; }
+    .alert-info h3 { font-size: 1.2rem; margin-bottom: 6px; }
+    .alert-sender { color: #3b82f6; font-size: 0.95rem; font-weight: 600; margin-bottom: 4px; }
+    .alert-time { color: #64748b; font-size: 0.85rem; }
+    .btn-ack { background: #10b981; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-ack:hover { background: #059669; }
+    .empty-state { text-align: center; color: #475569; padding: 40px 20px; }
+    .empty-state p { font-size: 1.1rem; }
+
+    /* Usuarios conectados */
+    .users-panel { margin-top: 30px; background: #1e293b; padding: 20px; border-radius: 12px; }
+    .users-panel h3 { font-size: 1rem; color: #64748b; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+    .user-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.95rem; border-bottom: 1px solid #334155; }
+    .user-item:last-child { border-bottom: none; }
+    .user-item .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; }
+    .user-count { color: #3b82f6; font-weight: 600; }
+
+    /* Animaciones */
+    @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
+    @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .panic-btn { width: 200px; height: 200px; font-size: 1.2rem; }
+      .btn-alerta { width: 160px; height: 160px; }
+      .status-msg { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Pantalla de Registro -->
+  <div id="registerScreen">
+    <div style="font-size: 4rem; margin-bottom: 15px;">🚨</div>
+    <h2>Botón de Pánico</h2>
+    <p>Ingresa tu nombre para enviar y recibir alertas de emergencia</p>
+    <input type="text" id="nameInput" placeholder="Tu nombre completo" maxlength="30" autocomplete="off">
+    <button class="btn-enter" id="btnEnter" disabled onclick="enterApp()">Entrar al Sistema</button>
+  </div>
+
+  <!-- App Principal -->
+  <div id="appMain">
+    <div class="header">
+      <h1>🚨 Pánico Escolar</h1>
+      <div class="user-badge">
+        <span id="userLabel"></span>
+        <span class="connection-status" id="connStatus"></span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('emisor')">📡 Emitir Alerta</button>
+      <button class="tab" onclick="switchTab('receptor')">📥 Receptor</button>
+    </div>
+
+    <!-- Panel Emisor -->
+    <div id="emisor" class="panel active">
+      <div class="btn-group">
+        <button class="panic-btn btn-urgente" id="btnUrg" onclick="sendAlert('urgente')">
+          🆘<br>NECESITO<br>AYUDA<br>URGENTE
+        </button>
+        <button class="panic-btn btn-alerta" id="btnAlr" onclick="sendAlert('alerta')">
+          ⚠️<br>ALERTA
+        </button>
+      </div>
+      <div class="status-msg" id="statusMsg"></div>
+      <p style="text-align:center; color:#64748b; font-size:0.9rem; margin-top:20px;">
+        Las alertas se envían instantáneamente a todos los dispositivos conectados
+      </p>
+    </div>
+
+    <!-- Panel Receptor -->
+    <div id="receptor" class="panel">
+      <div class="alerts-container" id="alertsContainer">
+        <div class="empty-state">
+          <p>✅ Sin alertas activas</p>
+          <p style="margin-top:8px; font-size:0.9rem;">El sistema está funcionando correctamente</p>
+        </div>
+      </div>
+
+      <div class="users-panel">
+        <h3>👥 Usuarios Conectados (<span class="user-count" id="userCount">0</span>)</h3>
+        <div id="usersList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Conexión WebSocket
+    const socket = io();
+    let myName = localStorage.getItem('panic_user') || '';
+    let alerts = [];
+    let connectedUsers = [];
+    let audioCtx = null;
+
+    // Inicializar audio
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    // Sonido de alarma
+    function playAlarm(type) {
+      initAudio();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = type === 'urgente' ? 'square' : 'sawtooth';
+      const now = audioCtx.currentTime;
+      
+      if (type === 'urgente') {
+        osc.frequency.setValueAtTime(880, now);
+        osc.frequency.setValueAtTime(440, now + 0.15);
+        osc.frequency.setValueAtTime(880, now + 0.3);
+      } else {
+        osc.frequency.setValueAtTime(600, now);
+        osc.frequency.setValueAtTime(800, now + 0.2);
+        osc.frequency.setValueAtTime(600, now + 0.4);
+      }
+      
+      gain.gain.setValueAtTime(0.3, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(now + 0.6);
+    }
+
+    // Solicitar permiso para notificaciones
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    }
+
+    // Mostrar notificación nativa
+    function showNotification(title, body) {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon: '🚨', requireInteraction: true });
+      }
+    }
+
+    // Registro de usuario
+    const nameInput = document.getElementById('nameInput');
+    const btnEnter = document.getElementById('btnEnter');
+    
+    nameInput.addEventListener('input', () => {
+      btnEnter.disabled = nameInput.value.trim().length < 2;
+    });
+    
+    nameInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && nameInput.value.trim().length >= 2) {
+        enterApp();
+      }
+    });
+
+    function enterApp() {
+      myName = nameInput.value.trim();
+      localStorage.setItem('panic_user', myName);
+      
+      document.getElementById('registerScreen').style.display = 'none';
+      document.getElementById('appMain').style.display = 'block';
+      document.getElementById('userLabel').textContent = myName;
+      
+      // Registrar en servidor
+      socket.emit('register', { name: myName });
+      
+      // Solicitar permisos
+      requestNotificationPermission();
+      
+      // Inicializar audio con interacción del usuario
+      initAudio();
+    }
+
+    // Auto-login si ya hay nombre guardado
+    if (myName) {
+      document.getElementById('nameInput').value = myName;
+      enterApp();
+    }
+
+    // Enviar alerta
+    function sendAlert(type) {
+      const btnUrg = document.getElementById('btnUrg');
+      const btnAlr = document.getElementById('btnAlr');
+      const msgEl = document.getElementById('statusMsg');
+      
+      btnUrg.disabled = true;
+      btnAlr.disabled = true;
+      
+      const message = type === 'urgente' ? '¡NECESITO AYUDA URGENTE!' : '⚠️ ALERTA';
+      msgEl.textContent = message;
+      msgEl.className = `status-msg ${type}`;
+      playAlarm(type);
+      
+      socket.emit('send_alert', { 
+        type: type, 
+        message: message 
+      });
+      
+      setTimeout(() => {
+        btnUrg.disabled = false;
+        btnAlr.disabled = false;
+        msgEl.textContent = '';
+        msgEl.className = 'status-msg';
+      }, 3000);
+    }
+
+    // Cambiar tabs
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById(tab).classList.add('active');
+      if (tab === 'receptor') renderAlerts();
+    }
+
+    // Renderizar alertas
+    function renderAlerts() {
+      const container = document.getElementById('alertsContainer');
+      const activeAlerts = alerts.filter(a => !a.resolved);
+      
+      if (activeAlerts.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <p>✅ Sin alertas activas</p>
+            <p style="margin-top:8px; font-size:0.9rem;">El sistema está funcionando correctamente</p>
+          </div>
+        `;
+        return;
+      }
+      
+      container.innerHTML = activeAlerts.map(alert => `
+        <div class="alert-card ${alert.type === 'alerta' ? 'tipo-alerta' : ''}">
+          <div class="alert-info">
+            <h3>${alert.message}</h3>
+            <div class="alert-sender">👤 ${alert.sender}</div>
+            <div class="alert-time">🕒 ${alert.timestamp}</div>
+          </div>
+          <button class="btn-ack" onclick="resolveAlert('${alert.id}')">✓ Atendido</button>
+        </div>
+      `).join('');
+    }
+
+    // Renderizar usuarios
+    function renderUsers() {
+      document.getElementById('userCount').textContent = connectedUsers.length;
+      const list = document.getElementById('usersList');
+      
+      if (connectedUsers.length === 0) {
+        list.innerHTML = '<p style="color:#475569; font-size:0.9rem;">Sin usuarios conectados</p>';
+        return;
+      }
+      
+      list.innerHTML = connectedUsers.map(user => `
+        <div class="user-item">
+          <span class="dot"></span>
+          <span>${user.name}</span>
+        </div>
+      `).join('');
+    }
+
+    // Resolver alerta
+    function resolveAlert(alertId) {
+      socket.emit('resolve_alert', alertId);
+    }
+
+    // Event listeners de Socket
+    socket.on('connect', () => {
+      console.log('✅ Conectado al servidor');
+      document.getElementById('connStatus').classList.remove('disconnected');
+      if (myName) {
+        socket.emit('register', { name: myName });
+      }
+    });
+
+    socket.on('disconnect', () => {
+      console.log('❌ Desconectado');
+      document.getElementById('connStatus').classList.add('disconnected');
+    });
+
+    socket.on('new_alert', (alert) => {
+      alerts.unshift(alert);
+      playAlarm(alert.type);
+      showNotification('🚨 ALERTA', `${alert.sender}: ${alert.message}`);
+      renderAlerts();
+    });
+
+    socket.on('alert_resolved', (alertId) => {
+      const alert = alerts.find(a => a.id === alertId);
+      if (alert) {
+        alert.resolved = true;
+        renderAlerts();
+      }
+    });
+
+    socket.on('alerts_sync', (syncedAlerts) => {
+      alerts = syncedAlerts;
+      renderAlerts();
+    });
+
+    socket.on('users_update', (users) => {
+      connectedUsers = users;
+      renderUsers();
+    });
+
+    // Service Worker para notificaciones en background
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('data:text/javascript,').catch(() => {
+        // Ignorar error si no hay archivo sw.js
+      });
+    }
+  </script>
+</body>
+</html>
