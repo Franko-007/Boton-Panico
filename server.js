@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const os = require('os');
 
 const app = express();
 const server = http.createServer(app);
@@ -16,9 +15,32 @@ const io = new Server(server, {
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
 
-// Almacenamiento en memoria (para producción usar base de datos)
+// Almacenamiento en memoria
 const users = new Map();
 let alerts = [];
+
+// Función para obtener hora de Chile
+function getChileTime() {
+  const now = new Date();
+  return now.toLocaleTimeString('es-CL', { 
+    timeZone: 'America/Santiago',
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit',
+    hour12: true 
+  });
+}
+
+// Función para obtener fecha de Chile
+function getChileDate() {
+  const now = new Date();
+  return now.toLocaleDateString('es-CL', { 
+    timeZone: 'America/Santiago',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+}
 
 io.on('connection', (socket) => {
   console.log(`✅ Usuario conectado: ${socket.id}`);
@@ -28,10 +50,10 @@ io.on('connection', (socket) => {
     users.set(socket.id, {
       id: socket.id,
       name: data.name,
-      connectedAt: new Date().toISOString()
+      connectedAt: getChileTime()
     });
     
-    console.log(`👤 ${data.name} se registró`);
+    console.log(`👤 ${data.name} se registró a las ${getChileTime()}`);
     
     // Enviar lista actualizada de usuarios a todos
     io.emit('users_update', Array.from(users.values()));
@@ -48,21 +70,17 @@ io.on('connection', (socket) => {
     const alert = {
       id: Date.now() + Math.random().toString(36).substr(2, 9),
       sender: user.name,
-      type: data.type, // 'urgente' o 'alerta'
+      type: data.type,
       message: data.message,
-      timestamp: new Date().toLocaleTimeString('es-CL', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
-      }),
+      time: getChileTime(),
+      date: getChileDate(),
       resolved: false
     };
 
     alerts.unshift(alert);
-    // Mantener solo últimas 50 alertas
     if (alerts.length > 50) alerts = alerts.slice(0, 50);
 
-    console.log(`🚨 ALERTA de ${user.name}: ${alert.message}`);
+    console.log(`🚨 ALERTA de ${user.name} a las ${alert.time}: ${alert.message}`);
     
     // Enviar a TODOS los conectados
     io.emit('new_alert', alert);
@@ -73,7 +91,7 @@ io.on('connection', (socket) => {
     const alert = alerts.find(a => a.id === alertId);
     if (alert) {
       alert.resolved = true;
-      console.log(`✓ Alerta ${alertId} resuelta`);
+      console.log(`✓ Alerta ${alertId} resuelta a las ${getChileTime()}`);
       io.emit('alert_resolved', alertId);
     }
   });
@@ -91,26 +109,12 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  const interfaces = os.networkInterfaces();
-  let address = 'localhost';
-  
-  for (const iface of Object.values(interfaces)) {
-    if (!iface) continue;
-    for (const config of iface) {
-      if (config.family === 'IPv4' && !config.internal) {
-        address = config.address;
-        break;
-      }
-    }
-  }
-  
   console.log('🚀 Servidor activo en:');
-  console.log(`   Local: http://localhost:${PORT}`);
-  console.log(`   Red:   http://${address}:${PORT}`);
+  console.log(`   Puerto: ${PORT}`);
+  console.log(`   Hora Chile: ${getChileTime()}`);
   console.log('\n✅ Listo para recibir conexiones');
 });
 
-// Manejo de cierre elegante
 process.on('SIGTERM', () => {
   console.log(' Cerrando servidor...');
   server.close(() => {
