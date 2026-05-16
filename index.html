@@ -5,6 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1e">
   <title>🚨 Botón de Pánico – NSG</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pánico NSG">
+  <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   
@@ -114,6 +124,22 @@
       color: var(--blue-lite);
       font-weight: 700;
     }
+
+    /* ── BOTÓN INSTALAR PWA ─── */
+    #installBtn {
+      display: none;
+      align-items: center; gap: 8px;
+      margin: 10px auto 0;
+      padding: 9px 18px;
+      background: transparent;
+      border: 1.5px solid var(--blue-lite);
+      border-radius: 8px;
+      color: var(--blue-lite);
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;
+      cursor: pointer; transition: background 0.2s;
+    }
+    #installBtn:hover { background: rgba(59,130,246,0.12); }
 
     /* ─── APP PRINCIPAL ──────────────────────────────────── */
     #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
@@ -497,6 +523,8 @@
     <div class="feedback-msg" id="statusMsg"></div>
    <footer class="reg-footer" style="border-top: none; text-align: center;">
   Derechos Reservados - creado por <b>Franco</b>
+  <br>
+  <button id="installBtn" onclick="triggerInstall()">📲 Instalar app</button>
 </footer>
   </div>
 
@@ -847,6 +875,41 @@
   }
 
   /* ── closeSaeOverlay / resolveAlert: movidas al inicio del script ── */
+
+  /* ── REGISTRO DEL SERVICE WORKER (PWA) ─────────────────── */
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
+        .catch(err => console.warn('SW no registrado:', err));
+    });
+  }
+
+  /* ── PROMPT DE INSTALACIÓN PWA ──────────────────────────── */
+  let deferredPrompt = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+
+    // Mostrar botón de instalación en el footer
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) installBtn.style.display = 'inline-flex';
+  });
+
+  window.addEventListener('appinstalled', () => {
+    deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+    if (installBtn) installBtn.style.display = 'none';
+    console.log('✅ App instalada correctamente');
+  });
+
+  window.triggerInstall = function() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      deferredPrompt = null;
+    });
+  };
 
   /* ── CONTROL DE EVENTOS DE SOCKET REALES ────────────────── */
   if (typeof io !== 'undefined') {
