@@ -628,6 +628,7 @@
 
   function resolveAlert(alertId) {
     socket.emit('resolve_alert', alertId);
+    closeSaeOverlay();
   }
 
   /* ── Socket ──────────────────────────────────────────────── */
