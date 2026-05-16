@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1e">
   <title>🚨 Botón de Pánico – NSG</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -179,19 +179,19 @@
 
     .btn-urgente {
       width: 230px; height: 230px; font-size: 1.3rem; letter-spacing: 0.5px;
-      background: radial-gradient(circle at 35% 30%, #f87171, #7f1d1d);
-      border: 5px solid #fca5a5;
-      box-shadow: 0 0 55px rgba(239,68,68,0.45), 0 8px 30px rgba(0,0,0,0.4);
+      background: radial-gradient(circle at 40% 35%, #ff6b6b 0%, #c0392b 50%, #7f1d1d 100%);
+      border: 5px solid #ff9999;
+      box-shadow: 0 0 40px rgba(239,68,68,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
-    .btn-urgente:hover:not(:disabled) { box-shadow: 0 0 75px rgba(239,68,68,0.6), 0 8px 30px rgba(0,0,0,0.4); }
+    .btn-urgente:hover:not(:disabled) { box-shadow: 0 0 60px rgba(239,68,68,0.8), 0 8px 30px rgba(0,0,0,0.5); }
 
     .btn-alerta {
       width: 180px; height: 180px; font-size: 1.1rem; letter-spacing: 0.5px;
-      background: radial-gradient(circle at 35% 30%, #fbbf24, #78350f);
-      border: 5px solid #fde68a;
-      box-shadow: 0 0 45px rgba(245,158,11,0.4), 0 6px 24px rgba(0,0,0,0.35);
+      background: radial-gradient(circle at 40% 35%, #ffd700 0%, #f59e0b 45%, #92400e 100%);
+      border: 5px solid #ffe066;
+      box-shadow: 0 0 35px rgba(245,158,11,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
-    .btn-alerta:hover:not(:disabled) { box-shadow: 0 0 65px rgba(245,158,11,0.55), 0 6px 24px rgba(0,0,0,0.35); }
+    .btn-alerta:hover:not(:disabled) { box-shadow: 0 0 55px rgba(245,158,11,0.8), 0 6px 24px rgba(0,0,0,0.5); }
 
     .feedback-msg {
       text-align: center; min-height: 44px;
@@ -276,7 +276,8 @@
     .alert-tipo.alerta  { color: var(--amber); }
 
     .alert-meta { display: flex; flex-direction: column; gap: 3px; }
-    .alert-row  { display: flex; align-items: center; gap: 6px; font-size: 0.88rem; }
+    .alert-row  { display: flex; align-items: flex-start; gap: 6px; font-size: 0.88rem; }
+    .alert-row .val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .alert-row .lbl { color: var(--muted); min-width: 70px; }
     .alert-row .val { font-weight: 600; }
     .alert-row .loc-val { color: var(--blue-lite); font-weight: 700; }
@@ -313,12 +314,23 @@
 
     /* ─── OVERLAY SAE ────────────────────────────────────── */
     #saeOverlay {
-      position: fixed; inset: 0; z-index: 9999;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100vw; height: 100vh;
+      z-index: 9999;
       display: none; flex-direction: column;
       align-items: stretch; justify-content: flex-start;
+      -webkit-overflow-scrolling: touch;
+      overflow: hidden;
+      /* Forzar nuevo contexto de apilamiento */
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+    }
+    #saeOverlay.visible {
+      display: -webkit-flex;
+      display: flex;
       animation: overlayIn 0.25s ease-out;
     }
-    #saeOverlay.visible { display: flex; }
 
     .sae-bar {
       padding: 10px 18px;
@@ -334,10 +346,14 @@
     .alerta  .sae-bar-dot { background: var(--amber); }
 
     .sae-body {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 30px 24px; text-align: center;
-      position: relative;
+      -webkit-flex: 1; flex: 1;
+      display: -webkit-flex; display: flex;
+      -webkit-flex-direction: column; flex-direction: column;
+      -webkit-align-items: center; align-items: center;
+      -webkit-justify-content: center; justify-content: center;
+      padding: 24px 16px; text-align: center;
+      position: relative; overflow-y: auto;
+      min-height: 0;
     }
     .sae-body.urgente { background: rgba(127,29,29,0.97); }
     .sae-body.alerta  { background: rgba(120,53,15,0.97); }
@@ -349,7 +365,7 @@
       );
     }
 
-    .sae-icon { font-size: 5rem; margin-bottom: 16px; animation: shake 0.5s infinite; }
+    .sae-icon { font-size: clamp(3rem, 10vw, 5rem); margin-bottom: 12px; animation: shake 0.5s infinite; }
 
     .sae-level {
       font-family: 'Barlow Condensed', sans-serif;
@@ -359,16 +375,17 @@
 
     .sae-message {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(1.8rem, 6.5vw, 3rem);
+      font-size: clamp(1.4rem, 5.5vw, 3rem);
       font-weight: 900; letter-spacing: 1px; line-height: 1.2;
-      margin-bottom: 24px;
+      margin-bottom: 18px;
       text-transform: uppercase;
-      padding: 0 10px;
+      padding: 0 12px;
+      word-break: break-word;
     }
 
     .sae-detail {
       background: rgba(0,0,0,0.4); border-radius: 12px;
-      padding: 18px 24px; margin-bottom: 28px;
+      padding: 14px 18px; margin-bottom: 20px;
       width: 100%; max-width: 380px;
     }
     .sae-detail .sae-row {
@@ -415,6 +432,13 @@
     @media (max-width: 480px) {
       .btn-urgente { width: 195px; height: 195px; font-size: 1.15rem; }
       .btn-alerta  { width: 155px; height: 155px; font-size: 1rem; }
+
+      .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
+      .sae-level { font-size: 0.85rem; letter-spacing: 2px; }
+      .sae-detail { padding: 12px 14px; }
+      .sae-detail .sae-row { font-size: 0.88rem; }
+      .btn-sae-close { padding: 13px 28px; font-size: 1rem; }
+      .sae-time-badge { font-size: 0.72rem; padding: 5px 10px; }
     }
   </style>
 </head>
@@ -558,9 +582,16 @@
   let pendingAlertType = '';
   let alerts = [], connectedUsers = [];
   let audioCtx = null, audioInitialized = false;
+  let activeOscillators = [];
+
+  function stopAlarm() {
+    activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
+    activeOscillators = [];
+  }
 
   function closeSaeOverlay() {
     document.getElementById('saeOverlay').classList.remove('visible');
+    stopAlarm();
   }
 
   function closeLocationModal() {
@@ -620,6 +651,7 @@
     if (!audioCtx) initAudio();
     if (!audioCtx || audioCtx.state === 'closed') return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
+    stopAlarm();
 
     const patterns = type === 'urgente'
       ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]]
@@ -635,6 +667,7 @@
       gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
       osc.connect(gain); gain.connect(audioCtx.destination);
       osc.start(t); osc.stop(t + 0.18);
+      activeOscillators.push(osc);
     });
   }
 
@@ -752,7 +785,7 @@
           <div class="alert-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</div>
           <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
           <div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div>
-          <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${a.time}</span></div>
+          <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${a.time.split(':').slice(0,2).join(':')}</span></div>
         </div>
         <button class="btn-ack" onclick="resolveAlert('${a.id}')">✓ Atendido</button>
       </div>`).join('');
