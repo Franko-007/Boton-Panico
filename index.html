@@ -615,11 +615,18 @@
   let alerts = [], connectedUsers = [];
   let audioCtx = null, audioInitialized = false;
   let activeOscillators = [];
+  let alarmInterval = null;   // declarado aquí para evitar TDZ
 
   function stopAlarm() {
+    // 1. Detener el ciclo de repetición
     if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-    activeOscillators.forEach(osc => { try { osc.stop(); } catch(e) {} });
+    // 2. Detener todos los osciladores activos
+    activeOscillators.forEach(osc => { try { osc.stop(0); } catch(e) {} });
     activeOscillators = [];
+    // 3. Suspender contexto de audio para silencio inmediato
+    if (audioCtx && audioCtx.state === 'running') {
+      audioCtx.suspend().catch(() => {});
+    }
   }
 
   function closeSaeOverlay() {
@@ -680,8 +687,6 @@
       audioInitialized = true;
     } catch(e) {}
   }
-
-  let alarmInterval = null;
 
   function playAlarmOnce(type) {
     if (!audioCtx || audioCtx.state === 'closed') return;
@@ -755,6 +760,8 @@
     initAudio();
     socket.emit('register', { name: myName });
     requestNotifPerm();
+    // Suscribir push una vez que el SW esté listo
+    navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
   }
 
   if (myName) {
@@ -763,6 +770,7 @@
     document.getElementById('userLabel').textContent = myName;
     // El registro se emite automáticamente en el evento 'connect' del socket
     requestNotifPerm();
+    navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
   }
 
   /* ── MODAL UBICACIÓN: funciones movidas al inicio del script ── */
@@ -877,12 +885,62 @@
   /* ── closeSaeOverlay / resolveAlert: movidas al inicio del script ── */
 
   /* ── REGISTRO DEL SERVICE WORKER (PWA) ─────────────────── */
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
-        .catch(err => console.warn('SW no registrado:', err));
-    });
+  let swRegistration = null;
+
+  async function initServiceWorker() {
+    if (!('serviceWorker' in navigator)) return;
+    try {
+      swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+      console.log('✅ Service Worker registrado');
+    } catch(err) {
+      console.warn('SW no registrado:', err);
+    }
+  }
+
+  /* ── ESCUCHAR MENSAJES DEL SERVICE WORKER ──────────────── */
+  // Cuando el usuario toca una notificación push, el SW envía
+  // un mensaje para mostrar el overlay SAE en la app.
+  navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data && event.data.type === 'SHOW_SAE') {
+      const a = event.data.alert;
+      if (a) {
+        initAudio();
+        playAlarm(a.type);
+        showSaeOverlay(a);
+      }
+    }
+  });
+
+  /* ── SUSCRIPCIÓN PUSH ───────────────────────────────────── */
+  async function subscribePush() {
+    if (!swRegistration || !('PushManager' in window)) return;
+    try {
+      // Obtener clave pública del servidor
+      const res  = await fetch('/vapid-public-key');
+      const { key } = await res.json();
+
+      const sub = await swRegistration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(key)
+      });
+
+      // Registrar suscripción en el servidor
+      await fetch('/push-subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ socketId: socket.id, subscription: sub })
+      });
+      console.log('✅ Push suscrito');
+    } catch(err) {
+      console.warn('Push no disponible:', err.message);
+    }
+  }
+
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw     = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
   }
 
   /* ── PROMPT DE INSTALACIÓN PWA ──────────────────────────── */
@@ -890,26 +948,24 @@
   window.addEventListener('beforeinstallprompt', e => {
     e.preventDefault();
     deferredPrompt = e;
-
-    // Mostrar botón de instalación en el footer
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) installBtn.style.display = 'inline-flex';
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'inline-flex';
   });
 
   window.addEventListener('appinstalled', () => {
     deferredPrompt = null;
-    const installBtn = document.getElementById('installBtn');
-    if (installBtn) installBtn.style.display = 'none';
-    console.log('✅ App instalada correctamente');
+    const btn = document.getElementById('installBtn');
+    if (btn) btn.style.display = 'none';
   });
 
   window.triggerInstall = function() {
     if (!deferredPrompt) return;
     deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(choice => {
-      deferredPrompt = null;
-    });
+    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
   };
+
+  // Inicializar SW al cargar
+  window.addEventListener('load', () => initServiceWorker());
 
   /* ── CONTROL DE EVENTOS DE SOCKET REALES ────────────────── */
   if (typeof io !== 'undefined') {
