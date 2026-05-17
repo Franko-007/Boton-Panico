@@ -5,21 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1e">
   <title>🚨 Botón de Pánico – NSG</title>
-
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pánico NSG">
   <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  
-  <script src="/socket.io/socket.io.js" onerror="console.warn('Socket.io no encontrado de forma local. Activando entorno de pruebas.')"></script>
-  
+  <script src="/socket.io/socket.io.js" onerror="console.warn('Socket.io local no encontrado')"></script>
+
   <style>
     :root {
       --bg:        #0a0f1e;
@@ -34,58 +29,36 @@
       --red-dark:  #991b1b;
       --amber:     #f59e0b;
       --amber-dark:#b45309;
+      --purple:    #8b5cf6;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
     body {
       font-family: 'Barlow', sans-serif;
       background: var(--bg);
       color: var(--text);
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+      display: flex; flex-direction: column;
     }
 
-    /* ─── PANTALLA DE REGISTRO ───────────────────────────── */
-    #registerScreen {
-      position: fixed; inset: 0;
-      background: var(--bg);
-      z-index: 1000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 24px;
+    /* ── PANTALLA PIN ─────────────────────────────────────────── */
+    #pinScreen {
+      position: fixed; inset: 0; background: var(--bg); z-index: 2000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
     }
-
-    .reg-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      flex: 1;
-      width: 100%;
-    }
-
-    .reg-logo { font-size: 4rem; margin-bottom: 12px; }
-
-    .reg-title {
+    .pin-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .pin-logo { font-size: 3.5rem; margin-bottom: 10px; }
+    .pin-title {
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 2rem; font-weight: 900; letter-spacing: 1px;
-      margin-bottom: 6px;
+      font-size: 2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px;
     }
-
-    .reg-sub { color: var(--muted); font-size: 0.9rem; text-align: center; max-width: 280px; margin-bottom: 30px; }
-
-    .reg-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 28px 24px;
+    .pin-sub { color: var(--muted); font-size: 0.88rem; text-align: center; margin-bottom: 28px; }
+    .pin-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 24px;
       width: 100%; max-width: 340px;
       display: flex; flex-direction: column; gap: 14px;
     }
-
     .field-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-
     .field-input {
       width: 100%; padding: 13px 14px;
       background: var(--bg); border: 1.5px solid var(--border);
@@ -94,456 +67,473 @@
       outline: none; transition: border-color 0.2s;
     }
     .field-input:focus { border-color: var(--blue-lite); }
-
+    .field-input.error { border-color: var(--red); animation: shake-h 0.4s; }
+    .pin-error { color: var(--red); font-size: 0.85rem; text-align: center; min-height: 18px; }
     .btn-enter {
       width: 100%; padding: 15px;
       background: var(--blue); color: white;
       border: none; border-radius: 10px;
       font-family: 'Barlow Condensed', sans-serif;
       font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;
-      cursor: pointer; transition: background 0.2s, transform 0.1s;
-      margin-top: 4px;
+      cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 4px;
     }
     .btn-enter:hover { background: #1d4ed8; }
     .btn-enter:active { transform: scale(0.98); }
     .btn-enter:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    /* ─── FOOTER REGISTRO ───────────────────────────────── */
-    .reg-footer {
-      font-family: 'Barlow', sans-serif;
-      font-size: 0.82rem;
-      color: var(--muted);
-      text-align: center;
-      padding: 14px 0;
-      letter-spacing: 0.5px;
-      width: 100%;
-      border-top: 1px solid var(--border);
-      margin-top: auto;
+    /* ── PANTALLA REGISTRO (nombre) ───────────────────────────── */
+    #registerScreen {
+      position: fixed; inset: 0; background: var(--bg); z-index: 1500;
+      display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
     }
-    .reg-footer b {
-      color: var(--blue-lite);
-      font-weight: 700;
+    .reg-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .reg-logo { font-size: 3.5rem; margin-bottom: 10px; }
+    .reg-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px; }
+    .reg-sub { color: var(--muted); font-size: 0.88rem; text-align: center; max-width: 280px; margin-bottom: 28px; }
+    .reg-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 24px;
+      width: 100%; max-width: 340px;
+      display: flex; flex-direction: column; gap: 14px;
     }
-
-    /* ── BOTÓN INSTALAR PWA ─── */
-    #installBtn {
-      display: none;
-      align-items: center; gap: 8px;
-      margin: 10px auto 0;
-      padding: 9px 18px;
-      background: transparent;
-      border: 1.5px solid var(--blue-lite);
-      border-radius: 8px;
-      color: var(--blue-lite);
+    .role-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px;
       font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .role-badge.emisor      { background: rgba(37,99,235,0.15); color: var(--blue-lite); border: 1px solid var(--blue); }
+    .role-badge.coordinador { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid var(--purple); }
+    .reg-footer {
+      font-size: 0.82rem; color: var(--muted); text-align: center;
+      padding: 14px 0; border-top: 1px solid var(--border); margin-top: auto; width: 100%;
+    }
+    .reg-footer b { color: var(--blue-lite); font-weight: 700; }
+    #installBtn {
+      display: none; align-items: center; gap: 8px; margin: 10px auto 0;
+      padding: 9px 18px; background: transparent;
+      border: 1.5px solid var(--blue-lite); border-radius: 8px;
+      color: var(--blue-lite); font-family: 'Barlow Condensed', sans-serif;
       font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;
       cursor: pointer; transition: background 0.2s;
     }
     #installBtn:hover { background: rgba(59,130,246,0.12); }
 
-    /* ─── APP PRINCIPAL ──────────────────────────────────── */
-    #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
+    /* ── HEALTH INDICATOR ─────────────────────────────────────── */
+    #healthBar {
+      display: none;
+      background: rgba(239,68,68,0.15); border: 1px solid var(--red);
+      border-radius: 10px; padding: 8px 14px; margin-bottom: 12px;
+      font-size: 0.82rem; color: #fca5a5; text-align: center;
+      animation: flash 1.5s infinite;
+    }
 
+    /* ── APP PRINCIPAL ────────────────────────────────────────── */
+    #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
     .topbar {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 14px 18px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; margin-bottom: 18px;
+      padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; margin-bottom: 14px;
     }
-
-    .topbar-brand {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.3rem; font-weight: 900; letter-spacing: 1px;
-    }
+    .topbar-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 900; letter-spacing: 1px; }
     .topbar-brand span { color: var(--red); }
-
-    .topbar-user { text-align: right; }
-    .topbar-name { font-weight: 600; font-size: 0.95rem; }
-
-    .conn-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green); margin-left: 8px;
-      display: inline-block; animation: pulse-dot 2s infinite;
-    }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-name { font-weight: 600; font-size: 0.88rem; text-align: right; }
+    .topbar-role { font-size: 0.72rem; color: var(--muted); }
+    .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
     .conn-dot.off { background: var(--red); animation: none; }
 
-    /* ─── TABS ───────────────────────────────────────────── */
-    .tabs {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 8px; margin-bottom: 18px;
-    }
+    /* ── TABS ─────────────────────────────────────────────────── */
+    .tabs { display: grid; gap: 6px; margin-bottom: 14px; }
+    .tabs.emisor-tabs    { grid-template-columns: 1fr 1fr; }
+    .tabs.coord-tabs     { grid-template-columns: 1fr 1fr 1fr; }
     .tab {
-      padding: 11px; border: 1.5px solid var(--border);
+      padding: 10px; border: 1.5px solid var(--border);
       background: var(--surface); color: var(--muted);
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1rem; font-weight: 700; letter-spacing: 0.5px;
+      font-size: 0.92rem; font-weight: 700; letter-spacing: 0.5px;
       border-radius: 10px; cursor: pointer; transition: all 0.2s;
     }
     .tab:hover { border-color: var(--blue-lite); color: var(--text); }
     .tab.active { background: var(--blue); border-color: var(--blue); color: white; }
 
-    /* ─── PANEL EMISOR ───────────────────────────────────── */
+    /* ── PANELES ──────────────────────────────────────────────── */
     .panel { display: none; }
     .panel.active { display: block; }
 
-    .btn-grid {
-      display: flex; flex-direction: column;
-      align-items: center; gap: 22px; padding: 20px 0 30px;
-    }
-
+    /* ── EMISOR ───────────────────────────────────────────────── */
+    .btn-grid { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 16px 0 24px; }
     .panic-btn {
       border-radius: 50%; border: none; color: white;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-weight: 900; cursor: pointer;
-      display: flex; flex-direction: column;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 900;
+      cursor: pointer; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       line-height: 1.25; transition: transform 0.12s, box-shadow 0.2s;
-      user-select: none; -webkit-user-select: none;
+      user-select: none; -webkit-user-select: none; position: relative; overflow: hidden;
     }
-    .panic-btn:active { transform: scale(0.91); }
     .panic-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
     .btn-urgente {
-      width: 230px; height: 230px; font-size: 1.3rem; letter-spacing: 0.5px;
+      width: 220px; height: 220px; font-size: 1.2rem; letter-spacing: 0.5px;
       background: radial-gradient(circle at 40% 35%, #ff6b6b 0%, #c0392b 50%, #7f1d1d 100%);
       border: 5px solid #ff9999;
       box-shadow: 0 0 40px rgba(239,68,68,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
     .btn-urgente:hover:not(:disabled) { box-shadow: 0 0 60px rgba(239,68,68,0.8), 0 8px 30px rgba(0,0,0,0.5); }
-
     .btn-alerta {
-      width: 180px; height: 180px; font-size: 1.1rem; letter-spacing: 0.5px;
+      width: 170px; height: 170px; font-size: 1rem; letter-spacing: 0.5px;
       background: radial-gradient(circle at 40% 35%, #ffd700 0%, #f59e0b 45%, #92400e 100%);
       border: 5px solid #ffe066;
       box-shadow: 0 0 35px rgba(245,158,11,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
     .btn-alerta:hover:not(:disabled) { box-shadow: 0 0 55px rgba(245,158,11,0.8), 0 6px 24px rgba(0,0,0,0.5); }
 
+    /* Hold-to-confirm ring */
+    .hold-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(rgba(255,255,255,0.5) 0%, transparent 0%);
+      pointer-events: none; opacity: 0; transition: opacity 0.1s;
+    }
+    .panic-btn.holding .hold-ring { opacity: 1; }
+
+    .hold-hint { font-size: 0.68rem; opacity: 0.75; margin-top: 4px; letter-spacing: 0px; }
+
     .feedback-msg {
       text-align: center; min-height: 44px;
       font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.4rem; font-weight: 800; letter-spacing: 1px;
+      font-size: 1.3rem; font-weight: 800; letter-spacing: 1px;
     }
     .feedback-msg.urgente { color: var(--red); animation: flash 0.8s infinite; }
     .feedback-msg.alerta  { color: var(--amber); animation: flash 0.8s infinite; }
 
-    .hint { text-align: center; color: var(--muted); font-size: 0.82rem; margin-top: 16px; }
-
-    /* ─── MODAL UBICACIÓN ────────────────────────── */
+    /* ── MODAL UBICACIÓN ──────────────────────────────────────── */
     #locationModal {
       position: fixed; inset: 0; z-index: 5000;
-      background: rgba(5, 7, 14, 0.95);
+      background: rgba(5,7,14,0.95);
       display: flex; align-items: center; justify-content: center;
-      padding: 16px; opacity: 0; pointer-events: none;
-      transition: opacity 0.23s ease-out;
+      padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.23s ease-out;
     }
     #locationModal.visible { opacity: 1; pointer-events: auto; }
-
     .modal-card {
       background: var(--surface); border: 2px solid var(--border);
       border-radius: 20px; width: 100%; max-width: 460px;
       max-height: 85vh; display: flex; flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: scaleUp 0.23s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: scaleUp 0.23s cubic-bezier(0.175,0.885,0.32,1.15);
     }
-    .modal-header {
-      padding: 18px 20px; border-bottom: 1px solid var(--border);
-      text-align: center; position: relative;
-    }
-    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; letter-spacing: 0.5px; }
+    .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--border); text-align: center; position: relative; }
+    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px; }
     .modal-title.urgente { color: var(--red); }
-    .modal-title.alerta { color: var(--amber); }
-    
-    .modal-close {
-      position: absolute; right: 16px; top: 16px; background: none; border: none;
-      color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px;
-    }
+    .modal-title.alerta  { color: var(--amber); }
+    .modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px; }
     .modal-close:hover { color: var(--text); }
-
     .modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-    
     .loc-group-title {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.8rem; font-weight: 700;
-      color: var(--blue-lite); letter-spacing: 1.5px; text-transform: uppercase; margin: 8px 0 4px 4px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700;
+      color: var(--blue-lite); letter-spacing: 1.5px; text-transform: uppercase; margin: 6px 0 2px 4px;
     }
-
     .loc-btn {
-      width: 100%; padding: 14px 16px; background: var(--bg);
+      width: 100%; padding: 13px 16px; background: var(--bg);
       border: 1.5px solid var(--border); border-radius: 12px;
-      color: var(--text); font-family: 'Barlow', sans-serif; font-size: 1rem;
+      color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.97rem;
       font-weight: 600; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px;
       transition: all 0.15s ease;
     }
     .loc-btn:hover { border-color: var(--blue-lite); background: #161f33; }
     .loc-btn:active { transform: scale(0.98); }
-    .loc-btn .icon { font-size: 1.1rem; }
 
-    /* ─── PANEL RECEPTOR ─────────────────────────────────── */
-    .section-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.85rem; font-weight: 700; letter-spacing: 2px;
-      color: var(--muted); text-transform: uppercase; margin-bottom: 12px;
+    /* ── MODAL RESOLUCIÓN ─────────────────────────────────────── */
+    #resolveModal {
+      position: fixed; inset: 0; z-index: 6000;
+      background: rgba(5,7,14,0.96);
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
     }
+    #resolveModal.visible { opacity: 1; pointer-events: auto; }
+    .resolve-card {
+      background: var(--surface); border: 2px solid var(--green);
+      border-radius: 16px; padding: 24px; width: 100%; max-width: 400px;
+    }
+    .resolve-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--green); margin-bottom: 14px; }
+    .resolve-textarea {
+      width: 100%; padding: 11px 13px; background: var(--bg);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem;
+      resize: none; outline: none; margin-bottom: 14px; transition: border-color 0.2s;
+    }
+    .resolve-textarea:focus { border-color: var(--green); }
+    .resolve-actions { display: flex; gap: 10px; }
+    .btn-resolve-confirm {
+      flex: 1; padding: 13px; background: var(--green); color: white; border: none;
+      border-radius: 10px; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: background 0.2s;
+    }
+    .btn-resolve-confirm:hover { background: #059669; }
+    .btn-resolve-cancel {
+      padding: 13px 18px; background: transparent; color: var(--muted);
+      border: 1.5px solid var(--border); border-radius: 10px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-resolve-cancel:hover { border-color: var(--text); color: var(--text); }
 
+    /* ── PANEL RECEPTOR ───────────────────────────────────────── */
+    .section-title {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700;
+      letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
+    }
     .alert-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 5px solid var(--red);
-      border-radius: 12px; padding: 16px 18px;
-      margin-bottom: 12px; animation: slideIn 0.3s ease-out;
-      display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+      background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--red);
+      border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; animation: slideIn 0.3s ease-out;
     }
     .alert-card.tipo-alerta { border-left-color: var(--amber); }
-
+    .alert-card.status-vista { border-left-color: var(--blue-lite); opacity: 0.85; }
+    .alert-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
     .alert-tipo {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.15rem; font-weight: 800; margin-bottom: 5px; letter-spacing: 0.5px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;
     }
     .alert-tipo.urgente { color: var(--red); }
     .alert-tipo.alerta  { color: var(--amber); }
-
-    .alert-meta { display: flex; flex-direction: column; gap: 3px; }
-    .alert-row  { display: flex; align-items: flex-start; gap: 6px; font-size: 0.88rem; }
-    .alert-row .val { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .alert-row .lbl { color: var(--muted); min-width: 70px; }
+    .alert-status-badge {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 1px; padding: 3px 8px; border-radius: 20px;
+    }
+    .badge-activa  { background: rgba(239,68,68,0.2);  color: var(--red);       border: 1px solid var(--red); }
+    .badge-vista   { background: rgba(59,130,246,0.2); color: var(--blue-lite); border: 1px solid var(--blue-lite); }
+    .badge-atendida{ background: rgba(16,185,129,0.2); color: var(--green);     border: 1px solid var(--green); }
+    .alert-meta { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
+    .alert-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.85rem; }
+    .alert-row .lbl { color: var(--muted); min-width: 72px; }
     .alert-row .val { font-weight: 600; }
     .alert-row .loc-val { color: var(--blue-lite); font-weight: 700; }
-
+    .alert-row .note-val { color: #86efac; font-style: italic; }
+    .alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
     .btn-ack {
-      background: var(--green); color: white;
-      border: none; padding: 9px 16px; border-radius: 8px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;
-      cursor: pointer; transition: background 0.2s; white-space: nowrap; flex-shrink: 0;
+      padding: 8px 14px; border: none; border-radius: 8px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px;
+      cursor: pointer; transition: background 0.2s; white-space: nowrap;
     }
-    .btn-ack:hover { background: #059669; }
-
-    .empty-state {
-      text-align: center; padding: 40px 20px; color: var(--muted);
-    }
+    .btn-seen    { background: var(--blue); color: white; }
+    .btn-seen:hover { background: #1d4ed8; }
+    .btn-attend  { background: var(--green); color: white; }
+    .btn-attend:hover { background: #059669; }
+    .btn-ack:disabled { opacity: 0.4; cursor: not-allowed; }
+    .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
     .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
-    .empty-state p { font-size: 1rem; }
 
-    /* ─── USUARIOS ───────────────────────────────────────── */
+    /* ── PANEL HISTORIAL ──────────────────────────────────────── */
+    .historial-filters {
+      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
+    }
+    .filter-select {
+      padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border);
+      border-radius: 8px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.85rem;
+      outline: none; flex: 1; min-width: 90px;
+    }
+    .filter-select:focus { border-color: var(--blue-lite); }
+    .btn-filter {
+      padding: 7px 14px; background: var(--blue); color: white; border: none;
+      border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    }
+    .hist-count { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+    .hist-card {
+      background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--muted);
+      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+      font-size: 0.85rem;
+    }
+    .hist-card.urgente { border-left-color: var(--red); }
+    .hist-card.alerta  { border-left-color: var(--amber); }
+    .hist-card.atendida{ border-left-color: var(--green); }
+    .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .hist-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; }
+    .hist-tipo.urgente { color: var(--red); }
+    .hist-tipo.alerta  { color: var(--amber); }
+    .hist-time { color: var(--muted); font-size: 0.78rem; }
+    .hist-row  { color: var(--muted); margin-top: 2px; }
+    .hist-row b { color: var(--text); font-weight: 600; }
+    .hist-note { color: #86efac; font-style: italic; margin-top: 4px; }
+
+    /* ── USUARIOS ─────────────────────────────────────────────── */
     .users-box {
       background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 18px; margin-top: 22px;
+      border-radius: 12px; padding: 16px; margin-top: 18px;
     }
-    .users-box .section-title { margin-bottom: 10px; }
-
-    .user-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 7px 0; border-bottom: 1px solid var(--border);
-      font-size: 0.9rem;
-    }
+    .user-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
     .user-item:last-child { border-bottom: none; }
     .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+    .user-role { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
+    .user-role.coordinador { color: #a78bfa; }
 
-    /* ─── OVERLAY SAE ────────────────────────────────────── */
+    /* ── OVERLAY SAE ──────────────────────────────────────────── */
     #saeOverlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100%;
-      z-index: 9999;
-      display: flex; flex-direction: column;
-      align-items: stretch; justify-content: flex-start;
-      overflow: hidden;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.25s ease-out;
-      -webkit-transform: translateZ(0);
-      transform: translateZ(0);
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%; z-index: 9999;
+      display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+      overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out;
     }
-    #saeOverlay.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
+    #saeOverlay.visible { opacity: 1; pointer-events: auto; }
     .sae-bar {
-      padding: 10px 18px;
-      display: flex; align-items: center; gap: 10px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.85rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase;
+      padding: 10px 18px; display: flex; align-items: center; gap: 10px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 2px; text-transform: uppercase;
     }
     .sae-bar.urgente { background: #1a0202; color: #fca5a5; border-bottom: 2px solid #ef4444; }
     .sae-bar.alerta  { background: #1a1000; color: #fde68a; border-bottom: 2px solid #f59e0b; }
     .sae-bar-dot { width: 10px; height: 10px; border-radius: 50%; animation: flash 0.5s infinite; }
     .urgente .sae-bar-dot { background: var(--red); }
     .alerta  .sae-bar-dot { background: var(--amber); }
-
     .sae-body {
-      flex: 1;
-      display: flex; flex-direction: column;
+      flex: 1; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      padding: env(safe-area-inset-top, 20px) 16px env(safe-area-inset-bottom, 20px);
-      text-align: center;
-      position: relative; overflow-y: auto;
-      min-height: 0;
-      -webkit-overflow-scrolling: touch;
+      padding: env(safe-area-inset-top,20px) 16px env(safe-area-inset-bottom,20px);
+      text-align: center; position: relative; overflow-y: auto;
+      min-height: 0; -webkit-overflow-scrolling: touch;
     }
     .sae-body.urgente { background: rgba(127,29,29,0.97); }
     .sae-body.alerta  { background: rgba(120,53,15,0.97); }
-
-    .sae-stripes {
-      position: absolute; inset: 0; opacity: 0.06;
-      background: repeating-linear-gradient(
-        -45deg, #fff 0px, #fff 10px, transparent 10px, transparent 20px
-      );
-    }
-
-    .sae-icon { font-size: clamp(3rem, 10vw, 5rem); margin-bottom: 12px; animation: shake 0.5s infinite; }
-
-    .sae-level {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1rem; font-weight: 700; letter-spacing: 4px;
-      text-transform: uppercase; opacity: 0.8; margin-bottom: 8px;
-    }
-
-    .sae-message {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: clamp(1.4rem, 5.5vw, 3rem);
-      font-weight: 900; letter-spacing: 1px; line-height: 1.2;
-      margin-bottom: 18px;
-      text-transform: uppercase;
-      padding: 0 12px;
-      word-break: break-word;
-    }
-
-    .sae-detail {
-      background: rgba(0,0,0,0.4); border-radius: 12px;
-      padding: 14px 18px; margin-bottom: 20px;
-      width: 100%; max-width: 380px;
-    }
-    .sae-detail .sae-row {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 0.95rem;
-    }
+    .sae-stripes { position: absolute; inset: 0; opacity: 0.06;
+      background: repeating-linear-gradient(-45deg,#fff 0px,#fff 10px,transparent 10px,transparent 20px); }
+    .sae-icon { font-size: clamp(3rem,10vw,5rem); margin-bottom: 12px; animation: shake 0.5s infinite; }
+    .sae-level { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px; }
+    .sae-message { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.4rem,5.5vw,3rem); font-weight: 900; letter-spacing: 1px; line-height: 1.2; margin-bottom: 18px; text-transform: uppercase; padding: 0 12px; word-break: break-word; }
+    .sae-detail { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; width: 100%; max-width: 380px; }
+    .sae-detail .sae-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.95rem; }
     .sae-detail .sae-row:last-child { border-bottom: none; }
     .sae-detail .sae-row .sae-lbl { opacity: 0.7; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
     .sae-detail .sae-row .sae-val { font-weight: 700; }
     .sae-detail .sae-row .sae-val.loc { color: #fbbf24; font-size: 1.05rem; }
-
     .btn-sae-close {
       background: rgba(255,255,255,0.2); color: white;
-      border: 2px solid rgba(255,255,255,0.5);
-      border-radius: 14px;
+      border: 2px solid rgba(255,255,255,0.5); border-radius: 14px;
       padding: 18px 0; width: 100%; max-width: 340px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.25rem; font-weight: 800; letter-spacing: 1.5px;
+      font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 1.5px;
       cursor: pointer; transition: background 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-      flex-shrink: 0;
+      -webkit-tap-highlight-color: transparent; touch-action: manipulation; flex-shrink: 0;
     }
     .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
     .btn-sae-close:active { background: rgba(255,255,255,0.4); transform: scale(0.97); }
-
     .sae-time-badge {
       position: absolute; top: 14px; right: 18px;
-      background: rgba(0,0,0,0.4); border-radius: 8px;
-      padding: 6px 12px; font-size: 0.8rem; opacity: 0.85;
+      background: rgba(0,0,0,0.4); border-radius: 8px; padding: 6px 12px;
+      font-size: 0.8rem; opacity: 0.85;
       font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
     }
 
-    /* ─── KEYFRAMES ──────────────────────────────────────── */
+    /* ── KEYFRAMES ────────────────────────────────────────────── */
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.35} }
-    @keyframes shake {
-      0%,100%{transform:rotate(0deg)}
-      20%{transform:rotate(-8deg)}
-      40%{transform:rotate(8deg)}
-      60%{transform:rotate(-5deg)}
-      80%{transform:rotate(5deg)}
-    }
-    @keyframes slideIn { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes scaleUp { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
-    @keyframes overlayIn { from{opacity:0;transform:scale(1.02)} to{opacity:1;transform:scale(1)} }
+    @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    @keyframes shake     { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
+    @keyframes shake-h   { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
+    @keyframes slideIn   { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleUp   { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
 
     @media (max-width: 480px) {
-      .btn-urgente { width: 195px; height: 195px; font-size: 1.15rem; }
-      .btn-alerta  { width: 155px; height: 155px; font-size: 1rem; }
-
+      .btn-urgente { width: 195px; height: 195px; font-size: 1.1rem; }
+      .btn-alerta  { width: 155px; height: 155px; font-size: 0.95rem; }
       .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
-      .sae-level { font-size: 0.85rem; letter-spacing: 2px; }
-      .sae-detail { padding: 12px 14px; }
-      .sae-detail .sae-row { font-size: 0.88rem; }
-      .btn-sae-close { padding: 13px 28px; font-size: 1rem; }
-      .sae-time-badge { font-size: 0.72rem; padding: 5px 10px; }
     }
   </style>
 </head>
 <body>
 
-<div id="registerScreen">
-  <div class="reg-container">
-    <div class="reg-logo">🚨</div>
-    <div class="reg-title">PÁNICO ESCOLAR</div>
-    <p class="reg-sub">Sistema de alertas de emergencia — NSG</p>
-
-    <div class="reg-card">
+<!-- ─── PANTALLA PIN ──────────────────────────────────────────── -->
+<div id="pinScreen">
+  <div class="pin-container">
+    <div class="pin-logo">🔐</div>
+    <div class="pin-title">ACCESO NSG</div>
+    <p class="pin-sub">Ingresa tu PIN para acceder al sistema de alertas</p>
+    <div class="pin-card">
       <div>
-        <div class="field-label">Tu nombre y apellido</div>
-        <input type="text" id="nameInput" class="field-input"
-               placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
+        <div class="field-label">Nombre y apellido</div>
+        <input type="text" id="pinNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
       </div>
-      <button class="btn-enter" id="btnEnter" disabled onclick="enterApp()">
-        ENTRAR AL SISTEMA
-      </button>
+      <div>
+        <div class="field-label">PIN de acceso</div>
+        <input type="password" id="pinInput" class="field-input" placeholder="●●●●" maxlength="10" inputmode="numeric" autocomplete="off">
+      </div>
+      <div class="pin-error" id="pinError"></div>
+      <button class="btn-enter" id="btnPin" disabled onclick="verifyPin()">ENTRAR</button>
     </div>
   </div>
 </div>
 
+<!-- ─── APP PRINCIPAL ─────────────────────────────────────────── -->
 <div id="appMain">
+
+  <div id="healthBar">⚠️ Servidor sin respuesta — verifica la conexión</div>
 
   <div class="topbar">
     <div class="topbar-brand">🚨 <span>PÁNICO</span> NSG</div>
-    <div class="topbar-user">
-      <div class="topbar-name">
-        <span id="userLabel"></span>
-        <span class="conn-dot" id="connStatus"></span>
+    <div class="topbar-right">
+      <div>
+        <div class="topbar-name" id="userLabel"></div>
+        <div class="topbar-role" id="roleLabel"></div>
       </div>
+      <span class="conn-dot" id="connStatus"></span>
     </div>
   </div>
 
-  <div class="tabs">
+  <div class="tabs emisor-tabs" id="tabsRow">
     <button class="tab active" onclick="switchTab('emisor', this)">📡 EMITIR</button>
-    <button class="tab" onclick="switchTab('receptor', this)">📥 RECEPTOR</button>
+    <button class="tab" onclick="switchTab('receptor', this)">📥 ALERTAS</button>
   </div>
 
+  <!-- PANEL EMISOR -->
   <div id="emisor" class="panel active">
     <div class="btn-grid">
-      <button class="panic-btn btn-urgente" id="btnUrg" onclick="openLocationModal('urgente')">
+      <button class="panic-btn btn-urgente" id="btnUrg">
+        <div class="hold-ring" id="holdRingUrg"></div>
         🆘<br>NECESITO<br>AYUDA<br>URGENTE
+        <div class="hold-hint">Mantén presionado</div>
       </button>
-      <button class="panic-btn btn-alerta" id="btnAlr" onclick="openLocationModal('alerta')">
+      <button class="panic-btn btn-alerta" id="btnAlr">
+        <div class="hold-ring" id="holdRingAlr"></div>
         ⚠️<br>ALERTA
+        <div class="hold-hint">Mantén presionado</div>
       </button>
     </div>
-
     <div class="feedback-msg" id="statusMsg"></div>
-   <footer class="reg-footer" style="border-top: none; text-align: center;">
-  Derechos Reservados - creado por <b>Franco</b>
-  <br>
-  <button id="installBtn" onclick="triggerInstall()">📲 Instalar app</button>
-</footer>
+    <footer style="font-size:0.8rem;color:var(--muted);text-align:center;padding:14px 0 4px;border-top:1px solid var(--border);margin-top:16px;">
+      Derechos Reservados – creado por <b style="color:var(--blue-lite)">Franco</b>
+      <br><button id="installBtn" onclick="triggerInstall()">📲 Instalar app</button>
+    </footer>
   </div>
 
+  <!-- PANEL RECEPTOR -->
   <div id="receptor" class="panel">
     <div class="section-title">🚨 Alertas activas</div>
     <div id="alertsContainer">
-      <div class="empty-state">
-        <div class="empty-icon">✅</div>
-        <p>Sin alertas activas</p>
-      </div>
+      <div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>
     </div>
-
     <div class="users-box">
       <div class="section-title">👥 Conectados — <span id="userCount">0</span></div>
       <div id="usersList"></div>
     </div>
   </div>
+
+  <!-- PANEL HISTORIAL (solo coordinador) -->
+  <div id="historial" class="panel">
+    <div class="historial-filters">
+      <select class="filter-select" id="filtEstado">
+        <option value="">Todos los estados</option>
+        <option value="activa">Activa</option>
+        <option value="vista">Vista</option>
+        <option value="atendida">Atendida</option>
+      </select>
+      <select class="filter-select" id="filtTipo">
+        <option value="">Todos los tipos</option>
+        <option value="urgente">Urgente</option>
+        <option value="alerta">Alerta</option>
+      </select>
+      <button class="btn-filter" onclick="loadHistorial()">Filtrar</button>
+    </div>
+    <div class="hist-count" id="histCount"></div>
+    <div id="histContainer"><div class="empty-state"><div class="empty-icon">📋</div><p>Cargando historial…</p></div></div>
+  </div>
+
 </div>
 
+<!-- MODAL UBICACIÓN -->
 <div id="locationModal">
   <div class="modal-card">
     <div class="modal-header">
@@ -551,29 +541,38 @@
       <div class="modal-title" id="modalTitle">¿DÓNDE TE ENCUENTRAS?</div>
     </div>
     <div class="modal-body">
-      
       <div class="loc-group-title">Patios y Canchas</div>
-      <button class="loc-btn" onclick="confirmAndSend('Patio Central')"><span class="icon">🌳</span> Patio Central</button>
-      <button class="loc-btn" onclick="confirmAndSend('Quillay')"><span class="icon">🌿</span> Quillay</button>
-      <button class="loc-btn" onclick="confirmAndSend('Cancha Sintética')"><span class="icon">⚽</span> Cancha Sintética</button>
-      <button class="loc-btn" onclick="confirmAndSend('Cerca del Huerto')"><span class="icon">🌱</span> Cerca del Huerto</button>
-      <button class="loc-btn" onclick="confirmAndSend('Cancha de Básquetbol')"><span class="icon">🏀</span> Cancha de Básquetbol</button>
-
+      <button class="loc-btn" onclick="confirmAndSend('Patio Central')"><span>🌳</span> Patio Central</button>
+      <button class="loc-btn" onclick="confirmAndSend('Quillay')"><span>🌿</span> Quillay</button>
+      <button class="loc-btn" onclick="confirmAndSend('Cancha Sintética')"><span>⚽</span> Cancha Sintética</button>
+      <button class="loc-btn" onclick="confirmAndSend('Cerca del Huerto')"><span>🌱</span> Cerca del Huerto</button>
+      <button class="loc-btn" onclick="confirmAndSend('Cancha de Básquetbol')"><span>🏀</span> Cancha de Básquetbol</button>
       <div class="loc-group-title">Enseñanza Media</div>
-      <button class="loc-btn" onclick="confirmAndSend('Tercer Piso de Media')"><span class="icon">🏢</span> Tercer Piso de Media</button>
-      <button class="loc-btn" onclick="confirmAndSend('Segundo Piso de Media')"><span class="icon">🏢</span> Segundo Piso de Media</button>
-      <button class="loc-btn" onclick="confirmAndSend('Segundo Piso 5tos y 6tos')"><span class="icon">🏢</span> Segundo Piso 5tos y 6tos</button>
-      <button class="loc-btn" onclick="confirmAndSend('Salida de Media')"><span class="icon">🚪</span> Salida de Media</button>
-
+      <button class="loc-btn" onclick="confirmAndSend('Tercer Piso de Media')"><span>🏢</span> Tercer Piso de Media</button>
+      <button class="loc-btn" onclick="confirmAndSend('Segundo Piso de Media')"><span>🏢</span> Segundo Piso de Media</button>
+      <button class="loc-btn" onclick="confirmAndSend('Segundo Piso 5tos y 6tos')"><span>🏢</span> Segundo Piso 5tos y 6tos</button>
+      <button class="loc-btn" onclick="confirmAndSend('Salida de Media')"><span>🚪</span> Salida de Media</button>
       <div class="loc-group-title">Instalaciones</div>
-      <button class="loc-btn" onclick="confirmAndSend('Gimnasio')"><span class="icon">👟</span> Gimnasio</button>
-      <button class="loc-btn" onclick="confirmAndSend('Casino JUNAEB')"><span class="icon">🍽️</span> Casino JUNAEB</button>
-      <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span class="icon">🧱</span> Acceso Principal</button>
-
+      <button class="loc-btn" onclick="confirmAndSend('Gimnasio')"><span>👟</span> Gimnasio</button>
+      <button class="loc-btn" onclick="confirmAndSend('Casino JUNAEB')"><span>🍽️</span> Casino JUNAEB</button>
+      <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span>🧱</span> Acceso Principal</button>
     </div>
   </div>
 </div>
 
+<!-- MODAL RESOLUCIÓN -->
+<div id="resolveModal">
+  <div class="resolve-card">
+    <div class="resolve-title">✓ Marcar como Atendida</div>
+    <textarea id="resolveNote" class="resolve-textarea" rows="3" placeholder="Nota opcional: ¿qué ocurrió? ¿quién atendió?"></textarea>
+    <div class="resolve-actions">
+      <button class="btn-resolve-cancel" onclick="closeResolveModal()">Cancelar</button>
+      <button class="btn-resolve-confirm" onclick="confirmResolve()">✓ CONFIRMAR ATENDIDA</button>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY SAE -->
 <div id="saeOverlay">
   <div class="sae-bar" id="saeBar">
     <span class="sae-bar-dot"></span>
@@ -586,421 +585,556 @@
     <div class="sae-level" id="saeLevel">EMERGENCIA · NIVEL ROJO</div>
     <div class="sae-message" id="saeMessage">¡NECESITO AYUDA URGENTE!</div>
     <div class="sae-detail">
-      <div class="sae-row">
-        <span class="sae-lbl">Emisor</span>
-        <span class="sae-val" id="saeSender">—</span>
-      </div>
-      <div class="sae-row">
-        <span class="sae-lbl">Ubicación</span>
-        <span class="sae-val loc" id="saeLocation">—</span>
-      </div>
-      <div class="sae-row">
-        <span class="sae-lbl">Hora</span>
-        <span class="sae-val" id="saeTime">—</span>
-      </div>
+      <div class="sae-row"><span class="sae-lbl">Emisor</span><span class="sae-val" id="saeSender">—</span></div>
+      <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
+      <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
     <button class="btn-sae-close" onclick="closeSaeOverlay()">✓ ENTENDIDO — CERRAR</button>
   </div>
 </div>
 
-
-
 <script>
-  /* ─────────────────────────────────────────────────────────────
-     IMPORTANTE: estas funciones se declaran primero porque el HTML
-     las referencia via onclick inline. Si se declararan después del
-     bloque de inicialización, el onclick fallaría en Live Server.
-  ───────────────────────────────────────────────────────────── */
-  let pendingAlertType = '';
-  let alerts = [], connectedUsers = [];
-  let audioCtx = null, audioInitialized = false;
-  let activeOscillators = [];
-  let alarmInterval = null;   // declarado aquí para evitar TDZ
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO GLOBAL
+═══════════════════════════════════════════════════════════════ */
+let myName   = '';
+let myRole   = '';      // 'emisor' | 'coordinador'
+let alerts   = [];
+let connectedUsers = [];
+let audioCtx = null, audioInitialized = false;
+let activeOscillators = [];
+let alarmInterval = null;
+let pendingAlertType = '';
+let resolveTargetId  = '';
 
-  function stopAlarm() {
-    // 1. Detener el ciclo de repetición
-    if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-    // 2. Detener todos los osciladores activos
-    activeOscillators.forEach(osc => { try { osc.stop(0); } catch(e) {} });
-    activeOscillators = [];
-    // 3. Suspender contexto de audio para silencio inmediato
-    if (audioCtx && audioCtx.state === 'running') {
-      audioCtx.suspend().catch(() => {});
-    }
-  }
+/* ═══════════════════════════════════════════════════════════════
+   AUDIO
+═══════════════════════════════════════════════════════════════ */
+function initAudio() {
+  if (audioInitialized) return;
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioInitialized = true; } catch(e) {}
+}
+function stopAlarm() {
+  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+  activeOscillators.forEach(o => { try { o.stop(0); } catch(e){} });
+  activeOscillators = [];
+  if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(()=>{});
+}
+function playAlarmOnce(type) {
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  const patterns = type === 'urgente'
+    ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]]
+    : [[600,0],[800,0.2],[600,0.4],[800,0.6]];
+  patterns.forEach(([freq, delay]) => {
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type === 'urgente' ? 'square' : 'sawtooth';
+    const t = audioCtx.currentTime + delay;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(0.28, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(t); osc.stop(t + 0.18);
+    activeOscillators.push(osc);
+  });
+}
+function playAlarm(type) {
+  if (!audioCtx) initAudio();
+  if (!audioCtx || audioCtx.state === 'closed') return;
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  stopAlarm();
+  playAlarmOnce(type);
+  alarmInterval = setInterval(() => playAlarmOnce(type), type === 'urgente' ? 1200 : 1000);
+}
 
-  function closeSaeOverlay() {
-    document.getElementById('saeOverlay').classList.remove('visible');
-    stopAlarm();
-  }
+/* ═══════════════════════════════════════════════════════════════
+   SOCKET
+═══════════════════════════════════════════════════════════════ */
+let socket;
+if (typeof io !== 'undefined') {
+  socket = io();
+} else {
+  socket = { emit: (e,d) => console.log('[Mock]', e, d), on: (e,cb) => {} };
+}
 
-  function closeLocationModal() {
-    document.getElementById('locationModal').classList.remove('visible');
-    pendingAlertType = '';
-  }
+/* ═══════════════════════════════════════════════════════════════
+   PIN + AUTENTICACIÓN
+═══════════════════════════════════════════════════════════════ */
+const pinNameInput = document.getElementById('pinNameInput');
+const pinInput     = document.getElementById('pinInput');
+const btnPin       = document.getElementById('btnPin');
+const pinError     = document.getElementById('pinError');
 
-  function openLocationModal(type) {
-    pendingAlertType = type;
-    const title = document.getElementById('modalTitle');
-    if (type === 'urgente') {
-      title.textContent = '🆘 EMERGENCIA: SELECCIONA TU UBICACIÓN';
-      title.className = 'modal-title urgente';
-    } else {
-      title.textContent = '⚠️ ALERTA: SELECCIONA TU UBICACIÓN';
-      title.className = 'modal-title alerta';
-    }
-    initAudio();
-    document.getElementById('locationModal').classList.add('visible');
-  }
+function checkPinForm() {
+  btnPin.disabled = pinNameInput.value.trim().length < 2 || pinInput.value.trim().length < 1;
+}
+pinNameInput.addEventListener('input', checkPinForm);
+pinInput.addEventListener('input', checkPinForm);
+pinInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !btnPin.disabled) verifyPin(); });
 
-  function switchTab(tab, btn) {
-    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById(tab).classList.add('active');
-    if (tab === 'receptor') renderAlerts();
-  }
+async function verifyPin() {
+  const name = pinNameInput.value.trim();
+  const pin  = pinInput.value.trim();
+  btnPin.disabled = true;
+  pinError.textContent = '';
 
-  function resolveAlert(alertId) {
-    socket.emit('resolve_alert', alertId);
-    closeSaeOverlay();
-  }
-
-  /* ── Socket ──────────────────────────────────────────────── */
-  let socket;
-  if (typeof io !== 'undefined') {
-    socket = io();
-  } else {
-    socket = {
-      emit: function(event, data) { console.log(`[Mock Socket] Emitido: ${event}`, data); },
-      on:   function(event, cb)   { console.log(`[Mock Socket] Escuchando: ${event}`); }
-    };
-  }
-
-  let myName = localStorage.getItem('panic_user') || '';
-
-  /* ── AUDIO ─────────────────────────────────────────────── */
-  function initAudio() {
-    if (audioInitialized) return;
-    try {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      audioInitialized = true;
-    } catch(e) {}
-  }
-
-  function playAlarmOnce(type) {
-    if (!audioCtx || audioCtx.state === 'closed') return;
-    const patterns = type === 'urgente'
-      ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]]
-      : [[600,0],[800,0.2],[600,0.4],[800,0.6]];
-
-    patterns.forEach(([freq, delay]) => {
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type === 'urgente' ? 'square' : 'sawtooth';
-      const t = audioCtx.currentTime + delay;
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.28, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
-      osc.connect(gain); gain.connect(audioCtx.destination);
-      osc.start(t); osc.stop(t + 0.18);
-      activeOscillators.push(osc);
+  try {
+    const res  = await fetch('/auth/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin })
     });
-  }
-
-  function playAlarm(type) {
-    if (!audioCtx) initAudio();
-    if (!audioCtx || audioCtx.state === 'closed') return;
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    stopAlarm();
-
-    const cycleDuration = type === 'urgente' ? 1200 : 1000;
-    playAlarmOnce(type);
-    alarmInterval = setInterval(() => playAlarmOnce(type), cycleDuration);
-  }
-
-  /* ── NOTIFICACIONES ─────────────────────────────────────── */
-  function requestNotifPerm() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+    const data = await res.json();
+    if (data.ok) {
+      myName = name;
+      myRole = data.role;
+      localStorage.setItem('panic_user', myName);
+      localStorage.setItem('panic_role', myRole);
+      localStorage.setItem('panic_pin',  pin);
+      enterApp();
+    } else {
+      pinError.textContent = '❌ PIN incorrecto';
+      pinInput.classList.add('error');
+      setTimeout(() => pinInput.classList.remove('error'), 500);
+      btnPin.disabled = false;
     }
+  } catch (err) {
+    // Servidor no alcanzable → fallo visible
+    pinError.textContent = '⚠️ No se pudo conectar con el servidor';
+    btnPin.disabled = false;
   }
-  function showNotif(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, requireInteraction: true,
-        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🚨</text></svg>'
-      });
-    }
-  }
+}
 
-  /* ── REGISTRO ───────────────────────────────────────────── */
-  const nameInput = document.getElementById('nameInput');
-  const btnEnter  = document.getElementById('btnEnter');
-
-  function checkForm() {
-    btnEnter.disabled = nameInput.value.trim().length < 2;
-  }
-
-  nameInput.addEventListener('input', checkForm);
-  nameInput.addEventListener('keypress', e => {
-    if (e.key === 'Enter' && !btnEnter.disabled) enterApp();
-  });
-
-  if (myName) nameInput.value = myName;
-  checkForm();
-
-  function enterApp() {
-    myName = nameInput.value.trim();
-    localStorage.setItem('panic_user', myName);
-
-    document.getElementById('registerScreen').style.display = 'none';
-    document.getElementById('appMain').style.display = 'block';
-    document.getElementById('userLabel').textContent = myName;
-
-    initAudio();
-    socket.emit('register', { name: myName });
-    requestNotifPerm();
-    // Suscribir push una vez que el SW esté listo
-    navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
-  }
-
-  if (myName) {
-    document.getElementById('registerScreen').style.display = 'none';
-    document.getElementById('appMain').style.display = 'block';
-    document.getElementById('userLabel').textContent = myName;
-    // El registro se emite automáticamente en el evento 'connect' del socket
-    requestNotifPerm();
-    navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
-  }
-
-  /* ── MODAL UBICACIÓN: funciones movidas al inicio del script ── */
-
-  function confirmAndSend(selectedLocation) {
-    const type = pendingAlertType;
-    closeLocationModal();
-
-    const btnUrg = document.getElementById('btnUrg');
-    const btnAlr = document.getElementById('btnAlr');
-    const msgEl  = document.getElementById('statusMsg');
-
-    btnUrg.disabled = btnAlr.disabled = true;
-    
-    // Inyección dinámica de la ubicación en el texto gigante principal
-    const mainMessage = type === 'urgente' 
-      ? `¡NECESITO AYUDA URGENTE EN ${selectedLocation}! Precaución.` 
-      : `⚠️ ALERTA EN ${selectedLocation}`;
-    
-    msgEl.textContent = type === 'urgente' ? `¡Solicitud enviada desde ${selectedLocation}!` : `Alerta emitida desde ${selectedLocation}`;
-    msgEl.className = `feedback-msg ${type}`;
-    playAlarm(type);
-
-    socket.emit('send_alert', { type, message: mainMessage, location: selectedLocation });
-
-    if (typeof io === 'undefined') {
-      setTimeout(() => {
-        showSaeOverlay({
-          type: type,
-          message: mainMessage,
-          sender: myName,
-          location: selectedLocation,
-          date: new Date().toLocaleDateString('es-CL'),
-          time: new Date().toLocaleTimeString('es-CL', {hour: '2-digit', minute:'2-digit'})
-        });
-      }, 500);
-    }
-
-    setTimeout(() => {
-      btnUrg.disabled = btnAlr.disabled = false;
-      msgEl.textContent = '';
-      msgEl.className = 'feedback-msg';
-    }, 4000);
-  }
-
-  /* ── TABS: función movida al inicio del script ── */
-
-  /* ── RENDER ALERTAS ─────────────────────────────────────── */
-  function renderAlerts() {
-    const container = document.getElementById('alertsContainer');
-    const active = alerts.filter(a => !a.resolved);
-    if (active.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">✅</div>
-          <p>Sin alertas activas</p>
-        </div>`;
-      return;
-    }
-    container.innerHTML = active.map(a => `
-      <div class="alert-card ${a.type === 'alerta' ? 'tipo-alerta' : ''}">
-        <div class="alert-meta">
-          <div class="alert-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</div>
-          <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
-          <div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div>
-          <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${a.time.split(':').slice(0,2).join(':')}</span></div>
-        </div>
-        <button class="btn-ack" onclick="resolveAlert('${a.id}')">✓ Atendido</button>
-      </div>`).join('');
-  }
-
-  /* ── RENDER USUARIOS ────────────────────────────────────── */
-  function renderUsers() {
-    document.getElementById('userCount').textContent = connectedUsers.length;
-    const list = document.getElementById('usersList');
-    if (!connectedUsers.length) {
-      list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">Sin usuarios conectados</p>';
-      return;
-    }
-    list.innerHTML = connectedUsers.map(u => `
-      <div class="user-item">
-        <span class="user-dot"></span>
-        <span>${u.name}</span>
-      </div>`).join('');
-  }
-
-  /* ── OVERLAY ESTILO SAE / SENAPRED ──────────────────────── */
-  function showSaeOverlay(alert) {
-    const isUrg = alert.type === 'urgente';
-    const overlay = document.getElementById('saeOverlay');
-    const bar     = document.getElementById('saeBar');
-    const body    = document.getElementById('saeBody');
-
-    bar.className  = `sae-bar ${alert.type}`;
-    body.className = `sae-body ${alert.type}`;
-
-    document.getElementById('saeBarText').textContent =
-      isUrg ? '🚨 EMERGENCIA · COLEGIO NSG' : '⚠️ ALERTA · COLEGIO NSG';
-    document.getElementById('saeIcon').textContent    = isUrg ? '🆘' : '⚠️';
-    document.getElementById('saeLevel').textContent   =
-      isUrg ? 'EMERGENCIA · NIVEL ROJO' : 'ALERTA · NIVEL NARANJA';
-    
-    document.getElementById('saeMessage').textContent = alert.message;
-    document.getElementById('saeSender').textContent  = alert.sender;
-    document.getElementById('saeLocation').textContent = alert.location || '—';
-    document.getElementById('saeTime').textContent    = `${alert.date} ${alert.time}`;
-    document.getElementById('saeTimeBadge').textContent = `${alert.date} · ${alert.time}`;
-
-    overlay.classList.add('visible');
-  }
-
-  /* ── closeSaeOverlay / resolveAlert: movidas al inicio del script ── */
-
-  /* ── REGISTRO DEL SERVICE WORKER (PWA) ─────────────────── */
-  let swRegistration = null;
-
-  async function initServiceWorker() {
-    if (!('serviceWorker' in navigator)) return;
+/* Auto-login si ya tenemos sesión guardada */
+(async function tryAutoLogin() {
+  const savedName = localStorage.getItem('panic_user');
+  const savedRole = localStorage.getItem('panic_role');
+  const savedPin  = localStorage.getItem('panic_pin');
+  if (savedName && savedRole && savedPin) {
     try {
-      swRegistration = await navigator.serviceWorker.register('/service-worker.js');
-      console.log('✅ Service Worker registrado');
-    } catch(err) {
-      console.warn('SW no registrado:', err);
-    }
-  }
-
-  /* ── ESCUCHAR MENSAJES DEL SERVICE WORKER ──────────────── */
-  // Cuando el usuario toca una notificación push, el SW envía
-  // un mensaje para mostrar el overlay SAE en la app.
-  navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SHOW_SAE') {
-      const a = event.data.alert;
-      if (a) {
-        initAudio();
-        playAlarm(a.type);
-        showSaeOverlay(a);
-      }
-    }
-  });
-
-  /* ── SUSCRIPCIÓN PUSH ───────────────────────────────────── */
-  async function subscribePush() {
-    if (!swRegistration || !('PushManager' in window)) return;
-    try {
-      // Obtener clave pública del servidor
-      const res  = await fetch('/vapid-public-key');
-      const { key } = await res.json();
-
-      const sub = await swRegistration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(key)
-      });
-
-      // Registrar suscripción en el servidor
-      await fetch('/push-subscribe', {
+      const res  = await fetch('/auth/verify-pin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ socketId: socket.id, subscription: sub })
+        body: JSON.stringify({ pin: savedPin })
       });
-      console.log('✅ Push suscrito');
-    } catch(err) {
-      console.warn('Push no disponible:', err.message);
+      const data = await res.json();
+      if (data.ok) {
+        myName = savedName;
+        myRole = savedRole;
+        enterApp();
+        return;
+      }
+    } catch(e) {}
+    // PIN ya no válido → limpiar
+    localStorage.removeItem('panic_pin');
+    localStorage.removeItem('panic_role');
+  }
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   ENTRAR A LA APP
+═══════════════════════════════════════════════════════════════ */
+function enterApp() {
+  document.getElementById('pinScreen').style.display  = 'none';
+  document.getElementById('appMain').style.display    = 'block';
+  document.getElementById('userLabel').textContent    = myName;
+  document.getElementById('roleLabel').textContent    = myRole === 'coordinador' ? '🟣 Coordinador' : '🔵 Emisor';
+
+  // Tabs según rol
+  const tabsRow = document.getElementById('tabsRow');
+  if (myRole === 'coordinador') {
+    tabsRow.className = 'tabs coord-tabs';
+    tabsRow.innerHTML = `
+      <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
+      <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>
+      <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>`;
+  }
+
+  initAudio();
+  socket.emit('register', { name: myName, role: myRole });
+  requestNotifPerm();
+  navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
+  startHealthCheck();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEALTH CHECK
+═══════════════════════════════════════════════════════════════ */
+function startHealthCheck() {
+  const bar = document.getElementById('healthBar');
+  async function check() {
+    try {
+      const res = await fetch('/health', { cache: 'no-store' });
+      if (res.ok) { bar.style.display = 'none'; }
+      else         { bar.style.display = 'block'; }
+    } catch(e) {
+      bar.style.display = 'block';
     }
   }
+  check();
+  setInterval(check, 30000);
+}
 
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const raw     = atob(base64);
-    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+/* ═══════════════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════════════ */
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(tab).classList.add('active');
+  if (tab === 'receptor') renderAlerts();
+  if (tab === 'historial') loadHistorial();
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HOLD-TO-CONFIRM (2 segundos)
+═══════════════════════════════════════════════════════════════ */
+(function setupHoldButtons() {
+  const HOLD_MS = 2000;
+  const configs = [
+    { btnId: 'btnUrg', ringId: 'holdRingUrg', type: 'urgente' },
+    { btnId: 'btnAlr', ringId: 'holdRingAlr', type: 'alerta'  }
+  ];
+
+  configs.forEach(({ btnId, ringId, type }) => {
+    const btn  = document.getElementById(btnId);
+    const ring = document.getElementById(ringId);
+    let holdTimer  = null;
+    let startTime  = 0;
+    let rafHandle  = null;
+
+    function startHold(e) {
+      if (btn.disabled) return;
+      e.preventDefault();
+      initAudio();
+      startTime = Date.now();
+      btn.classList.add('holding');
+      animate();
+      holdTimer = setTimeout(() => {
+        cancelAnimationFrame(rafHandle);
+        ring.style.background = 'conic-gradient(rgba(255,255,255,0.5) 100%, transparent 100%)';
+        btn.classList.remove('holding');
+        openLocationModal(type);
+      }, HOLD_MS);
+    }
+
+    function cancelHold() {
+      clearTimeout(holdTimer); holdTimer = null;
+      cancelAnimationFrame(rafHandle);
+      ring.style.background = 'conic-gradient(rgba(255,255,255,0.5) 0%, transparent 0%)';
+      btn.classList.remove('holding');
+    }
+
+    function animate() {
+      const pct = Math.min(((Date.now() - startTime) / HOLD_MS) * 100, 100);
+      ring.style.background = `conic-gradient(rgba(255,255,255,0.5) ${pct}%, transparent ${pct}%)`;
+      if (pct < 100) rafHandle = requestAnimationFrame(animate);
+    }
+
+    btn.addEventListener('mousedown',   startHold);
+    btn.addEventListener('touchstart',  startHold, { passive: false });
+    btn.addEventListener('mouseup',     cancelHold);
+    btn.addEventListener('mouseleave',  cancelHold);
+    btn.addEventListener('touchend',    cancelHold);
+    btn.addEventListener('touchcancel', cancelHold);
+  });
+})();
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL UBICACIÓN
+═══════════════════════════════════════════════════════════════ */
+function openLocationModal(type) {
+  pendingAlertType = type;
+  const title = document.getElementById('modalTitle');
+  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?' : '⚠️ ALERTA: ¿DÓNDE ESTÁS?';
+  title.className   = `modal-title ${type}`;
+  document.getElementById('locationModal').classList.add('visible');
+}
+function closeLocationModal() {
+  document.getElementById('locationModal').classList.remove('visible');
+  pendingAlertType = '';
+}
+function confirmAndSend(location) {
+  const type = pendingAlertType;
+  closeLocationModal();
+
+  const btnUrg = document.getElementById('btnUrg');
+  const btnAlr = document.getElementById('btnAlr');
+  const msgEl  = document.getElementById('statusMsg');
+
+  btnUrg.disabled = btnAlr.disabled = true;
+  const msg = type === 'urgente' ? `¡Ayuda urgente enviada desde ${location}!` : `Alerta emitida desde ${location}`;
+  msgEl.textContent = msg;
+  msgEl.className = `feedback-msg ${type}`;
+  playAlarm(type);
+
+  const message = type === 'urgente'
+    ? `¡NECESITO AYUDA URGENTE EN ${location}!`
+    : `⚠️ ALERTA EN ${location}`;
+
+  socket.emit('send_alert', { type, message, location });
+
+  // Demo offline
+  if (typeof io === 'undefined') {
+    setTimeout(() => showSaeOverlay({ type, message, sender: myName, location,
+      date: new Date().toLocaleDateString('es-CL'),
+      time: new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' })
+    }), 500);
   }
 
-  /* ── PROMPT DE INSTALACIÓN PWA ──────────────────────────── */
-  let deferredPrompt = null;
-  window.addEventListener('beforeinstallprompt', e => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const btn = document.getElementById('installBtn');
-    if (btn) btn.style.display = 'inline-flex';
-  });
+  setTimeout(() => {
+    btnUrg.disabled = btnAlr.disabled = false;
+    msgEl.textContent = ''; msgEl.className = 'feedback-msg';
+  }, 4000);
+}
 
-  window.addEventListener('appinstalled', () => {
-    deferredPrompt = null;
-    const btn = document.getElementById('installBtn');
-    if (btn) btn.style.display = 'none';
-  });
+/* ═══════════════════════════════════════════════════════════════
+   MODAL RESOLUCIÓN
+═══════════════════════════════════════════════════════════════ */
+function openResolveModal(alertId) {
+  resolveTargetId = alertId;
+  document.getElementById('resolveNote').value = '';
+  document.getElementById('resolveModal').classList.add('visible');
+  setTimeout(() => document.getElementById('resolveNote').focus(), 200);
+}
+function closeResolveModal() {
+  document.getElementById('resolveModal').classList.remove('visible');
+  resolveTargetId = '';
+}
+function confirmResolve() {
+  const note = document.getElementById('resolveNote').value.trim();
+  socket.emit('resolve_alert', { alertId: resolveTargetId, note });
+  closeResolveModal();
+  closeSaeOverlay();
+}
 
-  window.triggerInstall = function() {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
-  };
+/* ═══════════════════════════════════════════════════════════════
+   OVERLAY SAE
+═══════════════════════════════════════════════════════════════ */
+function showSaeOverlay(alert) {
+  const isUrg = alert.type === 'urgente';
+  const overlay = document.getElementById('saeOverlay');
+  document.getElementById('saeBar').className  = `sae-bar ${alert.type}`;
+  document.getElementById('saeBody').className = `sae-body ${alert.type}`;
+  document.getElementById('saeBarText').textContent  = isUrg ? '🚨 EMERGENCIA · COLEGIO NSG' : '⚠️ ALERTA · COLEGIO NSG';
+  document.getElementById('saeIcon').textContent     = isUrg ? '🆘' : '⚠️';
+  document.getElementById('saeLevel').textContent    = isUrg ? 'EMERGENCIA · NIVEL ROJO' : 'ALERTA · NIVEL NARANJA';
+  document.getElementById('saeMessage').textContent  = alert.message;
+  document.getElementById('saeSender').textContent   = alert.sender;
+  document.getElementById('saeLocation').textContent = alert.location || '—';
+  document.getElementById('saeTime').textContent     = `${alert.date} ${alert.time}`;
+  document.getElementById('saeTimeBadge').textContent= `${alert.date} · ${alert.time}`;
+  overlay.classList.add('visible');
+}
+function closeSaeOverlay() {
+  document.getElementById('saeOverlay').classList.remove('visible');
+  stopAlarm();
+}
 
-  // Inicializar SW al cargar
-  window.addEventListener('load', () => initServiceWorker());
-
-  /* ── CONTROL DE EVENTOS DE SOCKET REALES ────────────────── */
-  if (typeof io !== 'undefined') {
-    socket.on('connect', () => {
-      document.getElementById('connStatus').classList.remove('off');
-      if (myName) {
-        socket.emit('register', { name: myName });
-      }
-    });
-
-    socket.on('disconnect', () => {
-      document.getElementById('connStatus').classList.add('off');
-    });
-
-    socket.on('new_alert', alert => {
-      alerts.unshift(alert);
-      playAlarm(alert.type);
-      showNotif('🚨 ALERTA NSG', `${alert.sender} en ${alert.location}: ${alert.message}`);
-      showSaeOverlay(alert);
-      renderAlerts();
-    });
-
-    socket.on('alert_resolved', alertId => {
-      const a = alerts.find(a => a.id === alertId);
-      if (a) { a.resolved = true; renderAlerts(); }
-    });
-
-    socket.on('alerts_sync', synced => {
-      alerts = synced; renderAlerts();
-    });
-
-    socket.on('users_update', users => {
-      connectedUsers = users; renderUsers();
-    });
+/* ═══════════════════════════════════════════════════════════════
+   RENDER ALERTAS ACTIVAS
+═══════════════════════════════════════════════════════════════ */
+function renderAlerts() {
+  const container = document.getElementById('alertsContainer');
+  const active = alerts.filter(a => a.status !== 'atendida');
+  if (active.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>`;
+    return;
   }
+  container.innerHTML = active.map(a => {
+    const isCoord = myRole === 'coordinador';
+    const seenDis = a.status !== 'activa' ? 'disabled' : '';
+    const attDis  = a.status === 'atendida' ? 'disabled' : '';
+    const seenBtn = isCoord
+      ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>`
+      : '';
+    const attBtn  = isCoord
+      ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>`
+      : '';
+    const seenInfo = a.seen_by ? `<div class="alert-row"><span class="lbl">Visto por</span><span class="val">${a.seen_by}</span></div>` : '';
+    return `
+      <div class="alert-card ${a.type === 'alerta' ? 'tipo-alerta' : ''} status-${a.status}">
+        <div class="alert-header">
+          <div class="alert-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</div>
+          <span class="alert-status-badge badge-${a.status}">${a.status.toUpperCase()}</span>
+        </div>
+        <div class="alert-meta">
+          <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
+          <div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div>
+          <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${(a.time||'').slice(0,5)}</span></div>
+          ${seenInfo}
+        </div>
+        <div class="alert-actions">${seenBtn}${attBtn}</div>
+      </div>`;
+  }).join('');
+}
+
+function markSeen(alertId) {
+  socket.emit('mark_seen', { alertId });
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RENDER USUARIOS
+═══════════════════════════════════════════════════════════════ */
+function renderUsers() {
+  document.getElementById('userCount').textContent = connectedUsers.length;
+  const list = document.getElementById('usersList');
+  if (!connectedUsers.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">Sin usuarios conectados</p>';
+    return;
+  }
+  list.innerHTML = connectedUsers.map(u => `
+    <div class="user-item">
+      <span class="user-dot"></span>
+      <span>${u.name}</span>
+      <span class="user-role ${u.role}">${u.role === 'coordinador' ? '🟣 Coordinador' : '🔵 Emisor'}</span>
+    </div>`).join('');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HISTORIAL
+═══════════════════════════════════════════════════════════════ */
+async function loadHistorial() {
+  const estado = document.getElementById('filtEstado').value;
+  const tipo   = document.getElementById('filtTipo').value;
+  let url = '/api/historial?limit=200';
+  if (estado) url += '&estado=' + estado;
+  if (tipo)   url += '&tipo=' + tipo;
+
+  const container = document.getElementById('histContainer');
+  container.innerHTML = '<div class="empty-state"><p>Cargando…</p></div>';
+
+  try {
+    const res  = await fetch(url);
+    const data = await res.json();
+    document.getElementById('histCount').textContent = `${data.total} registros encontrados`;
+    if (data.total === 0) {
+      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros</p></div>';
+      return;
+    }
+    container.innerHTML = data.alerts.map(a => `
+      <div class="hist-card ${a.type} ${a.status}">
+        <div class="hist-header">
+          <span class="hist-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</span>
+          <span class="hist-time">${a.date} ${(a.time||'').slice(0,5)}</span>
+        </div>
+        <div class="hist-row">👤 <b>${a.sender}</b> — 📍 <b>${a.location}</b></div>
+        <div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status.toUpperCase()}</b>
+          ${a.resolved_by ? `• Atendido por <b>${a.resolved_by}</b>` : ''}
+          ${a.seen_by && !a.resolved_by ? `• Visto por <b>${a.seen_by}</b>` : ''}
+        </div>
+        ${a.resolve_note ? `<div class="hist-note">💬 "${a.resolve_note}"</div>` : ''}
+      </div>`).join('');
+  } catch(err) {
+    container.innerHTML = '<div class="empty-state"><p>Error al cargar historial</p></div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   NOTIFICACIONES
+═══════════════════════════════════════════════════════════════ */
+function requestNotifPerm() {
+  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+}
+function showNotif(title, body) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification(title, { body, requireInteraction: true });
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SERVICE WORKER + PUSH
+═══════════════════════════════════════════════════════════════ */
+let swRegistration = null;
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swRegistration = await navigator.serviceWorker.register('/service-worker.js');
+    console.log('✅ SW registrado');
+  } catch(err) { console.warn('SW no registrado:', err); }
+}
+
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SHOW_SAE') {
+    const a = event.data.alert;
+    if (a) { initAudio(); playAlarm(a.type); showSaeOverlay(a); }
+  }
+});
+
+async function subscribePush() {
+  if (!swRegistration || !('PushManager' in window)) return;
+  try {
+    const res = await fetch('/vapid-public-key');
+    if (!res.ok) return;
+    const { key } = await res.json();
+    const sub = await swRegistration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key)
+    });
+    await fetch('/push-subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ socketId: socket.id, subscription: sub })
+    });
+    console.log('✅ Push suscrito');
+  } catch(err) { console.warn('Push:', err.message); }
+}
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw     = atob(base64);
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   EVENTOS SOCKET
+═══════════════════════════════════════════════════════════════ */
+if (typeof io !== 'undefined') {
+  socket.on('connect', () => {
+    document.getElementById('connStatus').classList.remove('off');
+    if (myName) socket.emit('register', { name: myName, role: myRole });
+  });
+  socket.on('disconnect', () => {
+    document.getElementById('connStatus').classList.add('off');
+  });
+  socket.on('new_alert', alert => {
+    alerts.unshift(alert);
+    playAlarm(alert.type);
+    showNotif('🚨 ALERTA NSG', `${alert.sender} en ${alert.location}`);
+    showSaeOverlay(alert);
+    renderAlerts();
+  });
+  socket.on('alert_updated', updated => {
+    const idx = alerts.findIndex(a => a.id === updated.id);
+    if (idx >= 0) alerts[idx] = updated; else alerts.unshift(updated);
+    renderAlerts();
+  });
+  socket.on('alerts_sync', synced => {
+    alerts = synced; renderAlerts();
+  });
+  socket.on('users_update', users => {
+    connectedUsers = users; renderUsers();
+  });
+}
+
+/* PWA install */
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'inline-flex';
+});
+window.addEventListener('appinstalled', () => {
+  deferredPrompt = null;
+  const btn = document.getElementById('installBtn');
+  if (btn) btn.style.display = 'none';
+});
+window.triggerInstall = function() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
+};
+
+window.addEventListener('load', () => initServiceWorker());
 </script>
 </body>
 </html>
