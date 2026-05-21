@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panico-nsg-v2';
+const CACHE_NAME = 'panico-nsg-v3';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png'];
 
 /* ── Instalación ────────────────────────────────────────────── */
@@ -39,22 +39,25 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch(e) {}
-
+  
   const isUrg   = data.type === 'urgente';
-  const title   = data.title  || (isUrg ? '🚨 EMERGENCIA – NSG' : '⚠️ ALERTA – NSG');
+  const isAcc   = data.type === 'accidente';
+  const title   = data.title  || (isUrg ? '🚨 EMERGENCIA – NSG' : isAcc ? '🟣 ACCIDENTE – NSG' : '⚠️ ALERTA – NSG');
   const body    = data.body   || 'Nueva alerta de emergencia';
-  const tag     = 'alerta-nsg'; // reemplaza la notificación anterior si sigue activa
-
+  const color   = data.color  || (isUrg ? '#ef4444' : isAcc ? '#8b5cf6' : '#f59e0b');
+  const tag     = 'alerta-nsg';
+  
   event.waitUntil(
     self.registration.showNotification(title, {
       body,
       tag,
-      renotify:         true,        // vibra aunque ya exista una con el mismo tag
-      requireInteraction: true,      // NO desaparece sola (iOS 16.4+, Android)
+      renotify: true,
+      requireInteraction: true,
       icon:  '/icon-192.png',
       badge: '/icon-192.png',
-      vibrate: [400, 150, 400, 150, 600],
-      data:  data                    // payload completo para cuando el usuario toca
+      vibrate: isUrg ? [400,150,400,150,600] : isAcc ? [300,100,300,100,400] : [300,100,300],
+      color: color,
+      data: data
     })
   );
 });
@@ -63,22 +66,17 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const alertData = event.notification.data || {};
-
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clientList => {
-      // Buscar ventana ya abierta
       for (const client of clientList) {
         if (client.url.includes(self.location.origin)) {
           client.focus();
-          // Enviar datos al cliente para mostrar el overlay SAE
           client.postMessage({ type: 'SHOW_SAE', alert: alertData });
           return;
         }
       }
-      // No hay ventana abierta → abrir una nueva
       return self.clients.openWindow('/').then(newClient => {
         if (newClient) {
-          // Esperar un momento a que cargue antes de enviar el mensaje
           setTimeout(() => {
             newClient.postMessage({ type: 'SHOW_SAE', alert: alertData });
           }, 2000);
