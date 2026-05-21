@@ -1,5 +1,5 @@
 /* ──────────────────────────────────────────────────────────────
-   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.3 (Pro)
+   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.3 (Admin 2026)
    Base de datos: SQLite local (alerts.db)
 ────────────────────────────────────────────────────────────── */
 require('dotenv').config();
@@ -13,11 +13,7 @@ const { google }   = require('googleapis');
 
 const app    = express();
 const server = http.createServer(app);
-const io     = new Server(server, { 
-  cors: { origin: '*', methods: ['GET', 'POST'] },
-  pingTimeout: 60000,
-  pingInterval: 25000 
-});
+const io     = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
 
 app.use(express.static(path.join(__dirname)));
 app.use(express.json());
@@ -25,7 +21,6 @@ app.use(express.json());
 /* ── SQLite Local ────────────────────────────────────────────── */
 const db = new Database('./alerts.db');
 db.pragma('journal_mode = WAL');
-db.pragma('synchronous = NORMAL');
 
 function initDB() {
   db.exec(`CREATE TABLE IF NOT EXISTS alerts (
@@ -54,9 +49,8 @@ app.get('/vapid-public-key', (req, res) => {
 });
 
 /* ── PINes ───────────────────────────────────────────────────── */
-// ✅ PIN de Admin actualizado a 2026
 const PIN_EMISOR = process.env.PIN_EMISOR || '1234';
-const PIN_ADMIN  = process.env.PIN_ADMIN  || '2026';
+const PIN_ADMIN  = process.env.PIN_ADMIN  || '2026'; // ✅ PIN Admin actualizado
 
 app.post('/auth/verify-pin', (req, res) => {
   const { pin } = req.body;
@@ -146,22 +140,7 @@ async function sendPushToAll(alert) {
   dead.forEach(id => pushSubscriptions.delete(id));
 }
 
-/* ── API Dashboard ───────────────────────────────────────────── */
-app.get('/api/dashboard', (req, res) => {
-  try {
-    const stats = {
-      total: db.prepare('SELECT COUNT() as n FROM alerts').get().n,
-      active: db.prepare("SELECT COUNT() as n FROM alerts WHERE status = 'activa'").get().n,
-      seen: db.prepare("SELECT COUNT() as n FROM alerts WHERE status = 'vista'").get().n,
-      resolved: db.prepare("SELECT COUNT() as n FROM alerts WHERE status = 'atendida'").get().n,
-      byType: db.prepare("SELECT type, COUNT() as count FROM alerts GROUP BY type").all(),
-      recent: db.prepare("SELECT * FROM alerts ORDER BY created_at DESC LIMIT 8").all()
-    };
-    res.json({ ok: true, stats });
-  } catch (err) { res.status(500).json({ ok: false, error: err.message }); }
-});
-
-/* ── Historial ───────────────────────────────────────────────── */
+/* ── API Historial ───────────────────────────────────────────── */
 app.get('/api/historial', (req, res) => {
   const { desde, hasta, tipo, estado, limit = 200 } = req.query;
   let sql = 'SELECT * FROM alerts WHERE 1=1';
@@ -229,10 +208,12 @@ io.on('connection', (socket) => {
       type, message: (data.message || '').slice(0, 200), time: getChileTime(), date: getChileDate(), status: 'activa'
     };
     
+    // Emitir inmediatamente
     io.emit('new_alert', alert);
     sendPushToAll(alert);
     console.log(`🚨 [${alert.type.toUpperCase()}] ${user.name} @ ${alert.location} — ${alert.time}`);
     
+    // Guardar en background
     try {
       db.prepare('INSERT INTO alerts (id,sender,location,type,message,time,date,status) VALUES (?,?,?,?,?,?,?,?)')
         .run(alert.id, alert.sender, alert.location, alert.type, alert.message, alert.time, alert.date, 'activa');
