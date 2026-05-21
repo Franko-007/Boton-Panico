@@ -13,129 +13,40 @@
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <script src="/socket.io/socket.io.js" onerror="console.warn('Socket.io local no encontrado')"></script>
-
+  <script src="/socket.io/socket.io.js"></script>
   <style>
     :root {
-      --bg:        #0a0f1e;
-      --surface:   #111827;
-      --border:    #1f2d45;
-      --text:      #e8edf5;
-      --muted:     #4b6080;
-      --blue:      #2563eb;
-      --blue-lite: #3b82f6;
-      --green:     #10b981;
-      --red:       #ef4444;
-      --red-dark:  #991b1b;
-      --amber:     #f59e0b;
-      --amber-dark:#b45309;
-      --purple:    #8b5cf6;
+      --bg: #0a0f1e; --surface: #111827; --border: #1f2d45; --text: #e8edf5;
+      --muted: #4b6080; --blue: #2563eb; --blue-lite: #3b82f6; --green: #10b981;
+      --red: #ef4444; --red-dark: #991b1b; --amber: #f59e0b; --amber-dark: #b45309;
+      --purple: #8b5cf6; --purple-lite: #a78bfa;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body {
-      font-family: 'Barlow', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-    }
-
-    /* ── PANTALLA PIN ─────────────────────────────────────────── */
-    #pinScreen {
-      position: fixed; inset: 0; background: var(--bg); z-index: 2000;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
-    }
-    .pin-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
-    .pin-logo { font-size: 3.5rem; margin-bottom: 10px; }
-    .pin-title {
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px;
-    }
-    .pin-sub { color: var(--muted); font-size: 0.88rem; text-align: center; margin-bottom: 28px; }
-    .pin-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 28px 24px;
-      width: 100%; max-width: 340px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
+    body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
+    
+    /* PANTALLA DE BIENVENIDA */
+    #welcomeScreen { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .welcome-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
+    .welcome-logo { font-size: 4rem; margin-bottom: 16px; }
+    .welcome-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2.2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 8px; }
+    .welcome-sub { color: var(--muted); font-size: 0.95rem; text-align: center; margin-bottom: 32px; max-width: 320px; }
+    .welcome-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 14px; }
     .field-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-    .field-input {
-      width: 100%; padding: 13px 14px;
-      background: var(--bg); border: 1.5px solid var(--border);
-      border-radius: 10px; color: var(--text);
-      font-family: 'Barlow', sans-serif; font-size: 1rem;
-      outline: none; transition: border-color 0.2s;
-    }
+    .field-input { width: 100%; padding: 13px 14px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; }
     .field-input:focus { border-color: var(--blue-lite); }
-    .field-input.error { border-color: var(--red); animation: shake-h 0.4s; }
-    .pin-error { color: var(--red); font-size: 0.85rem; text-align: center; min-height: 18px; }
-    .btn-enter {
-      width: 100%; padding: 15px;
-      background: var(--blue); color: white;
-      border: none; border-radius: 10px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;
-      cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 4px;
-    }
+    .role-selector { display: flex; gap: 10px; margin: 8px 0; }
+    .role-option { flex: 1; padding: 12px; border: 1.5px solid var(--border); background: var(--bg); border-radius: 10px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s; text-align: center; }
+    .role-option:hover { border-color: var(--blue-lite); color: var(--text); }
+    .role-option.active.emisor { background: rgba(37,99,235,0.2); border-color: var(--blue); color: var(--blue-lite); }
+    .role-option.active.admin { background: rgba(139,92,246,0.2); border-color: var(--purple); color: var(--purple-lite); }
+    .btn-enter { width: 100%; padding: 15px; background: var(--blue); color: white; border: none; border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 8px; }
     .btn-enter:hover { background: #1d4ed8; }
     .btn-enter:active { transform: scale(0.98); }
-    .btn-enter:disabled { opacity: 0.45; cursor: not-allowed; }
-
-    /* ── PANTALLA REGISTRO (nombre) ───────────────────────────── */
-    #registerScreen {
-      position: fixed; inset: 0; background: var(--bg); z-index: 1500;
-      display: none; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
-    }
-    .reg-container { display: flex; flex-direction: column; align-items: center; width: 100%; }
-    .reg-logo { font-size: 3.5rem; margin-bottom: 10px; }
-    .reg-title { font-family: 'Barlow Condensed', sans-serif; font-size: 2rem; font-weight: 900; letter-spacing: 1px; margin-bottom: 4px; }
-    .reg-sub { color: var(--muted); font-size: 0.88rem; text-align: center; max-width: 280px; margin-bottom: 28px; }
-    .reg-card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 28px 24px;
-      width: 100%; max-width: 340px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
-    .role-badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 5px 12px; border-radius: 20px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.85rem; font-weight: 700; letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .role-badge.emisor      { background: rgba(37,99,235,0.15); color: var(--blue-lite); border: 1px solid var(--blue); }
-    .role-badge.coordinador { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid var(--purple); }
-    .reg-footer {
-      font-size: 0.82rem; color: var(--muted); text-align: center;
-      padding: 14px 0; border-top: 1px solid var(--border); margin-top: auto; width: 100%;
-    }
-    .reg-footer b { color: var(--blue-lite); font-weight: 700; }
-    #installBtn {
-      display: none; align-items: center; gap: 8px; margin: 10px auto 0;
-      padding: 9px 18px; background: transparent;
-      border: 1.5px solid var(--blue-lite); border-radius: 8px;
-      color: var(--blue-lite); font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;
-      cursor: pointer; transition: background 0.2s;
-    }
-    #installBtn:hover { background: rgba(59,130,246,0.12); }
-
-    /* ── HEALTH INDICATOR ─────────────────────────────────────── */
-    #healthBar {
-      display: none;
-      background: rgba(239,68,68,0.15); border: 1px solid var(--red);
-      border-radius: 10px; padding: 8px 14px; margin-bottom: 12px;
-      font-size: 0.82rem; color: #fca5a5; text-align: center;
-      animation: flash 1.5s infinite;
-    }
-
-    /* ── APP PRINCIPAL ────────────────────────────────────────── */
+    .demo-notice { font-size: 0.78rem; color: var(--muted); text-align: center; margin-top: 16px; padding: 10px; background: rgba(245,158,11,0.1); border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); }
+    
+    /* APP PRINCIPAL */
     #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; margin-bottom: 14px;
-    }
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 14px; }
     .topbar-brand { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 900; letter-spacing: 1px; }
     .topbar-brand span { color: var(--red); }
     .topbar-right { display: flex; align-items: center; gap: 10px; }
@@ -143,26 +54,20 @@
     .topbar-role { font-size: 0.72rem; color: var(--muted); }
     .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
     .conn-dot.off { background: var(--red); animation: none; }
-
-    /* ── TABS ─────────────────────────────────────────────────── */
+    
+    /* TABS */
     .tabs { display: grid; gap: 6px; margin-bottom: 14px; }
-    .tabs.emisor-tabs    { grid-template-columns: 1fr 1fr; }
-    .tabs.coord-tabs     { grid-template-columns: 1fr 1fr 1fr; }
-    .tab {
-      padding: 10px; border: 1.5px solid var(--border);
-      background: var(--surface); color: var(--muted);
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.92rem; font-weight: 700; letter-spacing: 0.5px;
-      border-radius: 10px; cursor: pointer; transition: all 0.2s;
-    }
+    .tabs.emisor-tabs { grid-template-columns: 1fr 1fr; }
+    .tabs.admin-tabs { grid-template-columns: 1fr 1fr 1fr; }
+    .tab { padding: 10px; border: 1.5px solid var(--border); background: var(--surface); color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 0.92rem; font-weight: 700; letter-spacing: 0.5px; border-radius: 10px; cursor: pointer; transition: all 0.2s; }
     .tab:hover { border-color: var(--blue-lite); color: var(--text); }
     .tab.active { background: var(--blue); border-color: var(--blue); color: white; }
-
-    /* ── PANELES ──────────────────────────────────────────────── */
+    
+    /* PANELES */
     .panel { display: none; }
     .panel.active { display: block; }
-
-    /* ── EMISOR ───────────────────────────────────────────────── */
+    
+    /* EMISOR - BOTONES DE EMERGENCIA */
     .btn-grid { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 16px 0 24px; }
     .panic-btn {
       border-radius: 50%; border: none; color: white;
@@ -170,9 +75,11 @@
       cursor: pointer; display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       line-height: 1.25; transition: transform 0.12s, box-shadow 0.2s;
-      user-select: none; -webkit-user-select: none; position: relative; overflow: hidden;
+      user-select: none; position: relative; overflow: hidden;
     }
+    .panic-btn:active { transform: scale(0.95); }
     .panic-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    
     .btn-urgente {
       width: 220px; height: 220px; font-size: 1.2rem; letter-spacing: 0.5px;
       background: radial-gradient(circle at 40% 35%, #ff6b6b 0%, #c0392b 50%, #7f1d1d 100%);
@@ -180,6 +87,7 @@
       box-shadow: 0 0 40px rgba(239,68,68,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
     .btn-urgente:hover:not(:disabled) { box-shadow: 0 0 60px rgba(239,68,68,0.8), 0 8px 30px rgba(0,0,0,0.5); }
+    
     .btn-alerta {
       width: 170px; height: 170px; font-size: 1rem; letter-spacing: 0.5px;
       background: radial-gradient(circle at 40% 35%, #ffd700 0%, #f59e0b 45%, #92400e 100%);
@@ -187,212 +95,130 @@
       box-shadow: 0 0 35px rgba(245,158,11,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
     .btn-alerta:hover:not(:disabled) { box-shadow: 0 0 55px rgba(245,158,11,0.8), 0 6px 24px rgba(0,0,0,0.5); }
-
-    /* Hold-to-confirm ring */
-    .hold-ring {
-      position: absolute; inset: 0; border-radius: 50%;
-      background: conic-gradient(rgba(255,255,255,0.5) 0%, transparent 0%);
-      pointer-events: none; opacity: 0; transition: opacity 0.1s;
+    
+    .btn-accidente {
+      width: 195px; height: 195px; font-size: 1.1rem; letter-spacing: 0.5px;
+      background: radial-gradient(circle at 40% 35%, var(--purple-lite) 0%, var(--purple) 45%, #4c1d95 100%);
+      border: 5px solid #c4b5fd;
+      box-shadow: 0 0 35px rgba(139,92,246,0.6), 0 6px 20px rgba(0,0,0,0.5);
     }
-    .panic-btn.holding .hold-ring { opacity: 1; }
-
-    .hold-hint { font-size: 0.68rem; opacity: 0.75; margin-top: 4px; letter-spacing: 0px; }
-
-    .feedback-msg {
-      text-align: center; min-height: 44px;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.3rem; font-weight: 800; letter-spacing: 1px;
-    }
+    .btn-accidente:hover:not(:disabled) { box-shadow: 0 0 55px rgba(139,92,246,0.8), 0 6px 24px rgba(0,0,0,0.5); }
+    
+    .hold-hint { font-size: 0.75rem; opacity: 0.8; margin-top: 6px; letter-spacing: 1px; }
+    
+    .feedback-msg { text-align: center; min-height: 44px; font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 800; letter-spacing: 1px; }
     .feedback-msg.urgente { color: var(--red); animation: flash 0.8s infinite; }
-    .feedback-msg.alerta  { color: var(--amber); animation: flash 0.8s infinite; }
-
-    /* ── MODAL UBICACIÓN ──────────────────────────────────────── */
-    #locationModal {
-      position: fixed; inset: 0; z-index: 5000;
-      background: rgba(5,7,14,0.95);
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.23s ease-out;
-    }
+    .feedback-msg.alerta { color: var(--amber); animation: flash 0.8s infinite; }
+    .feedback-msg.accidente { color: var(--purple); animation: flash 0.8s infinite; }
+    
+    /* MODAL UBICACIÓN */
+    #locationModal { position: fixed; inset: 0; z-index: 5000; background: rgba(5,7,14,0.95); display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease-out; }
     #locationModal.visible { opacity: 1; pointer-events: auto; }
-    .modal-card {
-      background: var(--surface); border: 2px solid var(--border);
-      border-radius: 20px; width: 100%; max-width: 460px;
-      max-height: 85vh; display: flex; flex-direction: column;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: scaleUp 0.23s cubic-bezier(0.175,0.885,0.32,1.15);
-    }
+    .modal-card { background: var(--surface); border: 2px solid var(--border); border-radius: 20px; width: 100%; max-width: 460px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: scaleUp 0.2s cubic-bezier(0.175,0.885,0.32,1.15); }
     .modal-header { padding: 18px 20px; border-bottom: 1px solid var(--border); text-align: center; position: relative; }
     .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 900; letter-spacing: 0.5px; }
     .modal-title.urgente { color: var(--red); }
-    .modal-title.alerta  { color: var(--amber); }
-    .modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px; }
+    .modal-title.alerta { color: var(--amber); }
+    .modal-title.accidente { color: var(--purple); }
+    .modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; padding: 4px; }
     .modal-close:hover { color: var(--text); }
     .modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-    .loc-group-title {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700;
-      color: var(--blue-lite); letter-spacing: 1.5px; text-transform: uppercase; margin: 6px 0 2px 4px;
-    }
-    .loc-btn {
-      width: 100%; padding: 13px 16px; background: var(--bg);
-      border: 1.5px solid var(--border); border-radius: 12px;
-      color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.97rem;
-      font-weight: 600; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px;
-      transition: all 0.15s ease;
-    }
+    .loc-group-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700; color: var(--blue-lite); letter-spacing: 1.5px; text-transform: uppercase; margin: 8px 0 4px 4px; }
+    .loc-btn { width: 100%; padding: 14px 16px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 1rem; font-weight: 600; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.15s ease; }
     .loc-btn:hover { border-color: var(--blue-lite); background: #161f33; }
     .loc-btn:active { transform: scale(0.98); }
+    
+    .btn-cancel-modal { width: 100%; padding: 14px; background: transparent; border: 2px solid var(--border); border-radius: 12px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+    .btn-cancel-modal:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.1); }
 
-    /* ── MODAL RESOLUCIÓN ─────────────────────────────────────── */
-    #resolveModal {
-      position: fixed; inset: 0; z-index: 6000;
-      background: rgba(5,7,14,0.96);
-      display: flex; align-items: center; justify-content: center;
-      padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s;
-    }
+    /* MODAL RESOLUCIÓN */
+    #resolveModal { position: fixed; inset: 0; z-index: 6000; background: rgba(5,7,14,0.96); display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
     #resolveModal.visible { opacity: 1; pointer-events: auto; }
-    .resolve-card {
-      background: var(--surface); border: 2px solid var(--green);
-      border-radius: 16px; padding: 24px; width: 100%; max-width: 400px;
-    }
+    .resolve-card { background: var(--surface); border: 2px solid var(--green); border-radius: 16px; padding: 24px; width: 100%; max-width: 400px; }
     .resolve-title { font-family: 'Barlow Condensed', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--green); margin-bottom: 14px; }
-    .resolve-textarea {
-      width: 100%; padding: 11px 13px; background: var(--bg);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem;
-      resize: none; outline: none; margin-bottom: 14px; transition: border-color 0.2s;
-    }
+    .resolve-textarea { width: 100%; padding: 11px 13px; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem; resize: none; outline: none; margin-bottom: 14px; transition: border-color 0.2s; }
     .resolve-textarea:focus { border-color: var(--green); }
     .resolve-actions { display: flex; gap: 10px; }
-    .btn-resolve-confirm {
-      flex: 1; padding: 13px; background: var(--green); color: white; border: none;
-      border-radius: 10px; font-family: 'Barlow Condensed', sans-serif;
-      font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: background 0.2s;
-    }
+    .btn-resolve-confirm { flex: 1; padding: 13px; background: var(--green); color: white; border: none; border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: background 0.2s; }
     .btn-resolve-confirm:hover { background: #059669; }
-    .btn-resolve-cancel {
-      padding: 13px 18px; background: transparent; color: var(--muted);
-      border: 1.5px solid var(--border); border-radius: 10px;
-      font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700;
-      cursor: pointer;
-    }
+    .btn-resolve-cancel { padding: 13px 18px; background: transparent; color: var(--muted); border: 1.5px solid var(--border); border-radius: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700; cursor: pointer; }
     .btn-resolve-cancel:hover { border-color: var(--text); color: var(--text); }
-
-    /* ── PANEL RECEPTOR ───────────────────────────────────────── */
-    .section-title {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700;
-      letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
-    }
-    .alert-card {
-      background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--red);
-      border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; animation: slideIn 0.3s ease-out;
-    }
+    
+    /* PANEL RECEPTOR */
+    .section-title { font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    .alert-card { background: var(--surface); border: 1px solid var(--border); border-left: 5px solid var(--red); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; animation: slideIn 0.3s ease-out; }
     .alert-card.tipo-alerta { border-left-color: var(--amber); }
+    .alert-card.tipo-accidente { border-left-color: var(--purple); }
     .alert-card.status-vista { border-left-color: var(--blue-lite); opacity: 0.85; }
     .alert-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-    .alert-tipo {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;
-    }
+    .alert-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
     .alert-tipo.urgente { color: var(--red); }
-    .alert-tipo.alerta  { color: var(--amber); }
-    .alert-status-badge {
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700;
-      letter-spacing: 1px; padding: 3px 8px; border-radius: 20px;
-    }
-    .badge-activa  { background: rgba(239,68,68,0.2);  color: var(--red);       border: 1px solid var(--red); }
-    .badge-vista   { background: rgba(59,130,246,0.2); color: var(--blue-lite); border: 1px solid var(--blue-lite); }
-    .badge-atendida{ background: rgba(16,185,129,0.2); color: var(--green);     border: 1px solid var(--green); }
+    .alert-tipo.alerta { color: var(--amber); }
+    .alert-tipo.accidente { color: var(--purple); }
+    .alert-status-badge { font-family: 'Barlow Condensed', sans-serif; font-size: 0.75rem; font-weight: 700; letter-spacing: 1px; padding: 3px 8px; border-radius: 20px; }
+    .badge-activa { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid var(--red); }
+    .badge-vista { background: rgba(59,130,246,0.2); color: var(--blue-lite); border: 1px solid var(--blue-lite); }
+    .badge-atendida { background: rgba(16,185,129,0.2); color: var(--green); border: 1px solid var(--green); }
     .alert-meta { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
     .alert-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.85rem; }
     .alert-row .lbl { color: var(--muted); min-width: 72px; }
     .alert-row .val { font-weight: 600; }
     .alert-row .loc-val { color: var(--blue-lite); font-weight: 700; }
-    .alert-row .note-val { color: #86efac; font-style: italic; }
     .alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn-ack {
-      padding: 8px 14px; border: none; border-radius: 8px;
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px;
-      cursor: pointer; transition: background 0.2s; white-space: nowrap;
-    }
-    .btn-seen    { background: var(--blue); color: white; }
+    .btn-ack { padding: 10px 14px; border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; transition: background 0.2s; white-space: nowrap; }
+    .btn-seen { background: var(--blue); color: white; }
     .btn-seen:hover { background: #1d4ed8; }
-    .btn-attend  { background: var(--green); color: white; }
+    .btn-attend { background: var(--green); color: white; }
     .btn-attend:hover { background: #059669; }
     .btn-ack:disabled { opacity: 0.4; cursor: not-allowed; }
     .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
     .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
-
-    /* ── PANEL HISTORIAL ──────────────────────────────────────── */
-    .historial-filters {
-      display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
-    }
-    .filter-select {
-      padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border);
-      border-radius: 8px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.85rem;
-      outline: none; flex: 1; min-width: 90px;
-    }
+    
+    /* PANEL HISTORIAL */
+    .historial-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .filter-select { padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.85rem; outline: none; flex: 1; min-width: 90px; }
     .filter-select:focus { border-color: var(--blue-lite); }
-    .btn-filter {
-      padding: 7px 14px; background: var(--blue); color: white; border: none;
-      border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
-      font-size: 0.9rem; font-weight: 700; cursor: pointer;
-    }
+    .btn-filter { padding: 7px 14px; background: var(--blue); color: white; border: none; border-radius: 8px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
     .hist-count { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
-    .hist-card {
-      background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--muted);
-      border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
-      font-size: 0.85rem;
-    }
+    .hist-card { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--muted); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 0.85rem; }
     .hist-card.urgente { border-left-color: var(--red); }
-    .hist-card.alerta  { border-left-color: var(--amber); }
-    .hist-card.atendida{ border-left-color: var(--green); }
+    .hist-card.alerta { border-left-color: var(--amber); }
+    .hist-card.accidente { border-left-color: var(--purple); }
+    .hist-card.atendida { border-left-color: var(--green); }
     .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
     .hist-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; }
     .hist-tipo.urgente { color: var(--red); }
-    .hist-tipo.alerta  { color: var(--amber); }
+    .hist-tipo.alerta { color: var(--amber); }
+    .hist-tipo.accidente { color: var(--purple); }
     .hist-time { color: var(--muted); font-size: 0.78rem; }
-    .hist-row  { color: var(--muted); margin-top: 2px; }
+    .hist-row { color: var(--muted); margin-top: 2px; }
     .hist-row b { color: var(--text); font-weight: 600; }
     .hist-note { color: #86efac; font-style: italic; margin-top: 4px; }
-
-    /* ── USUARIOS ─────────────────────────────────────────────── */
-    .users-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 12px; padding: 16px; margin-top: 18px;
-    }
+    
+    /* USUARIOS */
+    .users-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-top: 18px; }
     .user-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
     .user-item:last-child { border-bottom: none; }
     .user-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
     .user-role { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
-    .user-role.coordinador { color: #a78bfa; }
-
-    /* ── OVERLAY SAE ──────────────────────────────────────────── */
-    #saeOverlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      width: 100%; height: 100%; z-index: 9999;
-      display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
-      overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out;
-    }
+    .user-role.admin { color: var(--purple-lite); }
+    
+    /* OVERLAY SAE */
+    #saeOverlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100%; height: 100%; z-index: 9999; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out; }
     #saeOverlay.visible { opacity: 1; pointer-events: auto; }
-    .sae-bar {
-      padding: 10px 18px; display: flex; align-items: center; gap: 10px;
-      font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
-      letter-spacing: 2px; text-transform: uppercase;
-    }
-    .sae-bar.urgente { background: #1a0202; color: #fca5a5; border-bottom: 2px solid #ef4444; }
-    .sae-bar.alerta  { background: #1a1000; color: #fde68a; border-bottom: 2px solid #f59e0b; }
+    .sae-bar { padding: 10px 18px; display: flex; align-items: center; gap: 10px; font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+    .sae-bar.urgente { background: #1a0202; color: #fca5a5; border-bottom: 2px solid var(--red); }
+    .sae-bar.alerta { background: #1a1000; color: #fde68a; border-bottom: 2px solid var(--amber); }
+    .sae-bar.accidente { background: #1a0a2e; color: #d8b4fe; border-bottom: 2px solid var(--purple); }
     .sae-bar-dot { width: 10px; height: 10px; border-radius: 50%; animation: flash 0.5s infinite; }
     .urgente .sae-bar-dot { background: var(--red); }
-    .alerta  .sae-bar-dot { background: var(--amber); }
-    .sae-body {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: env(safe-area-inset-top,20px) 16px env(safe-area-inset-bottom,20px);
-      text-align: center; position: relative; overflow-y: auto;
-      min-height: 0; -webkit-overflow-scrolling: touch;
-    }
+    .alerta .sae-bar-dot { background: var(--amber); }
+    .accidente .sae-bar-dot { background: var(--purple); }
+    .sae-body { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: env(safe-area-inset-top,20px) 16px env(safe-area-inset-bottom,20px); text-align: center; position: relative; overflow-y: auto; min-height: 0; -webkit-overflow-scrolling: touch; }
     .sae-body.urgente { background: rgba(127,29,29,0.97); }
-    .sae-body.alerta  { background: rgba(120,53,15,0.97); }
-    .sae-stripes { position: absolute; inset: 0; opacity: 0.06;
-      background: repeating-linear-gradient(-45deg,#fff 0px,#fff 10px,transparent 10px,transparent 20px); }
+    .sae-body.alerta { background: rgba(120,53,15,0.97); }
+    .sae-body.accidente { background: rgba(76,29,149,0.97); }
+    .sae-stripes { position: absolute; inset: 0; opacity: 0.06; background: repeating-linear-gradient(-45deg,#fff 0px,#fff 10px,transparent 10px,transparent 20px); }
     .sae-icon { font-size: clamp(3rem,10vw,5rem); margin-bottom: 12px; animation: shake 0.5s infinite; }
     .sae-level { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px; }
     .sae-message { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.4rem,5.5vw,3rem); font-weight: 900; letter-spacing: 1px; line-height: 1.2; margin-bottom: 18px; text-transform: uppercase; padding: 0 12px; word-break: break-word; }
@@ -402,66 +228,69 @@
     .sae-detail .sae-row .sae-lbl { opacity: 0.7; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
     .sae-detail .sae-row .sae-val { font-weight: 700; }
     .sae-detail .sae-row .sae-val.loc { color: #fbbf24; font-size: 1.05rem; }
-    .btn-sae-close {
+    .btn-sae-close { 
       background: rgba(255,255,255,0.2); color: white;
       border: 2px solid rgba(255,255,255,0.5); border-radius: 14px;
       padding: 18px 0; width: 100%; max-width: 340px;
       font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 1.5px;
       cursor: pointer; transition: background 0.2s;
       -webkit-tap-highlight-color: transparent; touch-action: manipulation; flex-shrink: 0;
+      z-index: 10000;
     }
-    .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
+    .btn-sae-close:hover { background: rgba(255,255,255,0.3); }
     .btn-sae-close:active { background: rgba(255,255,255,0.4); transform: scale(0.97); }
-    .sae-time-badge {
-      position: absolute; top: 14px; right: 18px;
-      background: rgba(0,0,0,0.4); border-radius: 8px; padding: 6px 12px;
-      font-size: 0.8rem; opacity: 0.85;
-      font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
-    }
-
-    /* ── KEYFRAMES ────────────────────────────────────────────── */
+    .sae-time-badge { position: absolute; top: 14px; right: 18px; background: rgba(0,0,0,0.4); border-radius: 8px; padding: 6px 12px; font-size: 0.8rem; opacity: 0.85; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px; }
+    
+    /* TOAST */
+    #toast { position: fixed; top: 1rem; left: 50%; transform: translateX(-50%); background: var(--surface); color: var(--text); padding: 0.75rem 1.5rem; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); z-index: 10000; opacity: 0; transition: opacity 0.3s, transform 0.3s; pointer-events: none; font-weight: 600; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    #toast.success { border-left: 4px solid var(--green); }
+    #toast.error { border-left: 4px solid var(--red); }
+    #toast.info { border-left: 4px solid var(--blue-lite); }
+    
+    /* KEYFRAMES */
     @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
-    @keyframes shake     { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
-    @keyframes shake-h   { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-6px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(4px)} }
-    @keyframes slideIn   { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes scaleUp   { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
-
+    @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    @keyframes shake { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleUp { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+    
     @media (max-width: 480px) {
       .btn-urgente { width: 195px; height: 195px; font-size: 1.1rem; }
-      .btn-alerta  { width: 155px; height: 155px; font-size: 0.95rem; }
+      .btn-alerta { width: 155px; height: 155px; font-size: 0.95rem; }
+      .btn-accidente { width: 175px; height: 175px; font-size: 1rem; }
       .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
     }
   </style>
 </head>
 <body>
 
-<!-- ─── PANTALLA PIN ──────────────────────────────────────────── -->
-<div id="pinScreen">
-  <div class="pin-container">
-    <div class="pin-logo">🔐</div>
-    <div class="pin-title">ACCESO NSG</div>
-    <p class="pin-sub">Ingresa tu PIN para acceder al sistema de alertas</p>
-    <div class="pin-card">
+<!-- PANTALLA DE BIENVENIDA -->
+<div id="welcomeScreen">
+  <div class="welcome-container">
+    <div class="welcome-logo">🚨</div>
+    <div class="welcome-title">BOTÓN DE PÁNICO NSG</div>
+    <p class="welcome-sub">Sistema de alertas de emergencia para el colegio</p>
+    <div class="welcome-card">
       <div>
-        <div class="field-label">Nombre y apellido</div>
-        <input type="text" id="pinNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
+        <div class="field-label">Tu nombre</div>
+        <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
       </div>
       <div>
-        <div class="field-label">PIN de acceso</div>
-        <input type="password" id="pinInput" class="field-input" placeholder="●●●●" maxlength="10" inputmode="numeric" autocomplete="off">
+        <div class="field-label">Tipo de usuario</div>
+        <div class="role-selector">
+          <div class="role-option active emisor" onclick="selectRole('emisor', this)">🔵 Emisor</div>
+          <div class="role-option admin" onclick="selectRole('admin', this)">🟣 Admin</div>
+        </div>
       </div>
-      <div class="pin-error" id="pinError"></div>
-      <button class="btn-enter" id="btnPin" disabled onclick="verifyPin()">ENTRAR</button>
+      <button class="btn-enter" onclick="enterApp()">INGRESAR AL SISTEMA</button>
+      <div class="demo-notice" id="connectionNotice">⚠️ <b>Conectando al servidor...</b></div>
     </div>
   </div>
 </div>
 
-<!-- ─── APP PRINCIPAL ─────────────────────────────────────────── -->
+<!-- APP PRINCIPAL -->
 <div id="appMain">
-
-  <div id="healthBar">⚠️ Servidor sin respuesta — verifica la conexión</div>
-
   <div class="topbar">
     <div class="topbar-brand">🚨 <span>PÁNICO</span> NSG</div>
     <div class="topbar-right">
@@ -469,7 +298,7 @@
         <div class="topbar-name" id="userLabel"></div>
         <div class="topbar-role" id="roleLabel"></div>
       </div>
-      <span class="conn-dot" id="connStatus"></span>
+      <span class="conn-dot off" id="connStatus" title="Desconectado"></span>
     </div>
   </div>
 
@@ -481,21 +310,23 @@
   <!-- PANEL EMISOR -->
   <div id="emisor" class="panel active">
     <div class="btn-grid">
-      <button class="panic-btn btn-urgente" id="btnUrg">
-        <div class="hold-ring" id="holdRingUrg"></div>
+      <button class="panic-btn btn-urgente" id="btnUrg" onclick="openLocationModal('urgente')">
         🆘<br>NECESITO<br>AYUDA<br>URGENTE
-        <div class="hold-hint">Mantén presionado</div>
+        <div class="hold-hint">Toca para activar</div>
       </button>
-      <button class="panic-btn btn-alerta" id="btnAlr">
-        <div class="hold-ring" id="holdRingAlr"></div>
+      <button class="panic-btn btn-accidente" id="btnAcc" onclick="openLocationModal('accidente')">
+        🟣<br>ACCIDENTE
+        <div class="hold-hint">Toca para activar</div>
+      </button>
+      <button class="panic-btn btn-alerta" id="btnAlr" onclick="openLocationModal('alerta')">
         ⚠️<br>ALERTA
-        <div class="hold-hint">Mantén presionado</div>
+        <div class="hold-hint">Toca para activar</div>
       </button>
     </div>
     <div class="feedback-msg" id="statusMsg"></div>
     <footer style="font-size:0.8rem;color:var(--muted);text-align:center;padding:14px 0 4px;border-top:1px solid var(--border);margin-top:16px;">
-      Derechos Reservados – creado por <b style="color:var(--blue-lite)">Franco</b>
-      <br><button id="installBtn" onclick="triggerInstall()">📲 Instalar app</button>
+      Derechos reservados - Creado por <b>Franco</b>
+      <br><button id="installBtn" onclick="triggerInstall()" style="display:none; margin-top:8px; padding:8px 16px; background:transparent; border:1.5px solid var(--blue-lite); border-radius:8px; color:var(--blue-lite); cursor:pointer;">📲 Instalar app</button>
     </footer>
   </div>
 
@@ -507,11 +338,11 @@
     </div>
     <div class="users-box">
       <div class="section-title">👥 Conectados — <span id="userCount">0</span></div>
-      <div id="usersList"></div>
+      <div id="usersList"><p style="color:var(--muted);font-size:0.85rem">Esperando usuarios...</p></div>
     </div>
   </div>
 
-  <!-- PANEL HISTORIAL (solo coordinador) -->
+  <!-- PANEL HISTORIAL -->
   <div id="historial" class="panel">
     <div class="historial-filters">
       <select class="filter-select" id="filtEstado">
@@ -523,14 +354,15 @@
       <select class="filter-select" id="filtTipo">
         <option value="">Todos los tipos</option>
         <option value="urgente">Urgente</option>
+        <option value="accidente">Accidente</option>
         <option value="alerta">Alerta</option>
       </select>
-      <button class="btn-filter" onclick="loadHistorial()">Filtrar</button>
+      <button class="btn-filter" onclick="filterHistorial()">🔍 Filtrar</button>
+      <button class="btn-filter" onclick="exportCSV()">📥 CSV</button>
     </div>
     <div class="hist-count" id="histCount"></div>
-    <div id="histContainer"><div class="empty-state"><div class="empty-icon">📋</div><p>Cargando historial…</p></div></div>
+    <div id="histContainer"><div class="empty-state"><div class="empty-icon">📋</div><p>Cargando historial...</p></div></div>
   </div>
-
 </div>
 
 <!-- MODAL UBICACIÓN -->
@@ -556,6 +388,12 @@
       <button class="loc-btn" onclick="confirmAndSend('Gimnasio')"><span>👟</span> Gimnasio</button>
       <button class="loc-btn" onclick="confirmAndSend('Casino JUNAEB')"><span>🍽️</span> Casino JUNAEB</button>
       <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span>🧱</span> Acceso Principal</button>
+      <div class="loc-group-title">Accesos y Hall</div>
+      <button class="loc-btn" onclick="confirmAndSend('Acceso los Jazmines')"><span>🚪</span> Acceso los Jazmines</button>
+      <button class="loc-btn" onclick="confirmAndSend('Portón Santo Tomás')"><span>🚪</span> Portón Santo Tomás</button>
+      <button class="loc-btn" onclick="confirmAndSend('Hall Central')"><span>🏛️</span> Hall Central</button>
+      
+      <button class="btn-cancel-modal" onclick="closeLocationModal()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -593,41 +431,38 @@
   </div>
 </div>
 
+<!-- TOAST -->
+<div id="toast"></div>
+
 <script>
 /* ═══════════════════════════════════════════════════════════════
    ESTADO GLOBAL
 ═══════════════════════════════════════════════════════════════ */
-let myName   = '';
-let myRole   = '';      // 'emisor' | 'coordinador'
-let alerts   = [];
-let connectedUsers = [];
-let audioCtx = null, audioInitialized = false;
-let activeOscillators = [];
-let alarmInterval = null;
-let pendingAlertType = '';
-let resolveTargetId  = '';
+let myName = '', myRole = 'emisor', alerts = [], socket = null;
+let audioCtx = null, audioInitialized = false, activeOscillators = [], alarmInterval = null;
+let pendingAlertType = '', resolveTargetId = '', isConnected = false;
 
 /* ═══════════════════════════════════════════════════════════════
-   AUDIO
+   AUDIO SYSTEM (ROBUSTO)
 ═══════════════════════════════════════════════════════════════ */
 function initAudio() {
   if (audioInitialized) return;
   try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioInitialized = true; } catch(e) {}
 }
 function stopAlarm() {
-  if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-  activeOscillators.forEach(o => { try { o.stop(0); } catch(e){} });
-  activeOscillators = [];
-  if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(()=>{});
+  try {
+    if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+    activeOscillators.forEach(o => { try { o.stop(0); } catch(e){} });
+    activeOscillators = [];
+    if (audioCtx && audioCtx.state === 'running') audioCtx.suspend();
+  } catch(e) { console.warn('StopAlarm error', e); }
 }
 function playAlarmOnce(type) {
   if (!audioCtx || audioCtx.state === 'closed') return;
-  const patterns = type === 'urgente'
-    ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]]
-    : [[600,0],[800,0.2],[600,0.4],[800,0.6]];
+  const patterns = type === 'urgente' ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]] : type === 'accidente' ? [[660,0],[550,0.2],[660,0.4],[550,0.6]] : [[600,0],[800,0.2],[600,0.4],[800,0.6]];
   patterns.forEach(([freq, delay]) => {
     const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-    osc.type = type === 'urgente' ? 'square' : 'sawtooth';
+    osc.type = type === 'urgente' ? 'square' : type === 'accidente' ? 'triangle' : 'sawtooth';
     const t = audioCtx.currentTime + delay;
     osc.frequency.setValueAtTime(freq, t);
     gain.gain.setValueAtTime(0.28, t);
@@ -643,498 +478,352 @@ function playAlarm(type) {
   if (audioCtx.state === 'suspended') audioCtx.resume();
   stopAlarm();
   playAlarmOnce(type);
-  alarmInterval = setInterval(() => playAlarmOnce(type), type === 'urgente' ? 1200 : 1000);
+  alarmInterval = setInterval(() => playAlarmOnce(type), type === 'urgente' ? 1200 : type === 'accidente' ? 1100 : 1000);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SOCKET
+   AUTH & CONNECTION
 ═══════════════════════════════════════════════════════════════ */
-let socket;
-if (typeof io !== 'undefined') {
-  socket = io();
-} else {
-  socket = { emit: (e,d) => console.log('[Mock]', e, d), on: (e,cb) => {} };
-}
+function selectRole(role, el) { myRole = role; document.querySelectorAll('.role-option').forEach(e => e.classList.remove('active')); el.classList.add('active'); }
 
-/* ═══════════════════════════════════════════════════════════════
-   PIN + AUTENTICACIÓN
-═══════════════════════════════════════════════════════════════ */
-const pinNameInput = document.getElementById('pinNameInput');
-const pinInput     = document.getElementById('pinInput');
-const btnPin       = document.getElementById('btnPin');
-const pinError     = document.getElementById('pinError');
-
-function checkPinForm() {
-  btnPin.disabled = pinNameInput.value.trim().length < 2 || pinInput.value.trim().length < 1;
-}
-pinNameInput.addEventListener('input', checkPinForm);
-pinInput.addEventListener('input', checkPinForm);
-pinInput.addEventListener('keypress', e => { if (e.key === 'Enter' && !btnPin.disabled) verifyPin(); });
-
-async function verifyPin() {
-  const name = pinNameInput.value.trim();
-  const pin  = pinInput.value.trim();
-  btnPin.disabled = true;
-  pinError.textContent = '';
-
+async function enterApp() {
+  const nameInput = document.getElementById('userNameInput');
+  myName = nameInput.value.trim() || 'Usuario';
+  if (myName.length < 2) { nameInput.style.borderColor = 'var(--red)'; setTimeout(() => nameInput.style.borderColor = '', 500); return; }
+  
+  // ✅ PIN de Admin es ahora 2026
+  const expectedPin = myRole === 'admin' ? '2026' : '1234';
   try {
-    const res  = await fetch('/auth/verify-pin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin })
-    });
+    const res = await fetch('/auth/verify-pin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pin: expectedPin }) });
     const data = await res.json();
-    if (data.ok) {
-      myName = name;
-      myRole = data.role;
-      localStorage.setItem('panic_user', myName);
-      localStorage.setItem('panic_role', myRole);
-      localStorage.setItem('panic_pin',  pin);
-      enterApp();
-    } else {
-      pinError.textContent = '❌ PIN incorrecto';
-      pinInput.classList.add('error');
-      setTimeout(() => pinInput.classList.remove('error'), 500);
-      btnPin.disabled = false;
-    }
-  } catch (err) {
-    // Servidor no alcanzable → fallo visible
-    pinError.textContent = '⚠️ No se pudo conectar con el servidor';
-    btnPin.disabled = false;
-  }
-}
-
-/* Auto-login si ya tenemos sesión guardada */
-(async function tryAutoLogin() {
-  const savedName = localStorage.getItem('panic_user');
-  const savedRole = localStorage.getItem('panic_role');
-  const savedPin  = localStorage.getItem('panic_pin');
-  if (savedName && savedRole && savedPin) {
-    try {
-      const res  = await fetch('/auth/verify-pin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pin: savedPin })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        myName = savedName;
-        myRole = savedRole;
-        enterApp();
-        return;
-      }
-    } catch(e) {}
-    // PIN ya no válido → limpiar
-    localStorage.removeItem('panic_pin');
-    localStorage.removeItem('panic_role');
-  }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ENTRAR A LA APP
-═══════════════════════════════════════════════════════════════ */
-function enterApp() {
-  document.getElementById('pinScreen').style.display  = 'none';
-  document.getElementById('appMain').style.display    = 'block';
-  document.getElementById('userLabel').textContent    = myName;
-  document.getElementById('roleLabel').textContent    = myRole === 'coordinador' ? '🟣 Coordinador' : '🔵 Emisor';
-
-  // Tabs según rol
+    if (!data.ok) { showToast('PIN incorrecto', 'error'); return; }
+  } catch(e) { console.warn('Auth offline mode'); }
+  
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('appMain').style.display = 'block';
+  document.getElementById('userLabel').textContent = myName;
+  document.getElementById('roleLabel').textContent = myRole === 'admin' ? '🟣 Admin' : '🔵 Emisor';
+  
   const tabsRow = document.getElementById('tabsRow');
-  if (myRole === 'coordinador') {
-    tabsRow.className = 'tabs coord-tabs';
-    tabsRow.innerHTML = `
-      <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
-      <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>
-      <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>`;
+  if (myRole === 'admin') {
+    tabsRow.className = 'tabs admin-tabs';
+    tabsRow.innerHTML = `<button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button><button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button><button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>`;
   }
-
+  
   initAudio();
-  socket.emit('register', { name: myName, role: myRole });
-  requestNotifPerm();
-  navigator.serviceWorker && navigator.serviceWorker.ready.then(() => subscribePush());
-  startHealthCheck();
+  connectToServer();
+  renderAlerts();
+  if (myRole === 'admin') loadHistorial();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   HEALTH CHECK
-═══════════════════════════════════════════════════════════════ */
-function startHealthCheck() {
-  const bar = document.getElementById('healthBar');
-  async function check() {
-    try {
-      const res = await fetch('/health', { cache: 'no-store' });
-      if (res.ok) { bar.style.display = 'none'; }
-      else         { bar.style.display = 'block'; }
-    } catch(e) {
-      bar.style.display = 'block';
-    }
-  }
-  check();
-  setInterval(check, 30000);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   TABS
-═══════════════════════════════════════════════════════════════ */
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(tab).classList.add('active');
-  if (tab === 'receptor') renderAlerts();
-  if (tab === 'historial') loadHistorial();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   HOLD-TO-CONFIRM (2 segundos)
-═══════════════════════════════════════════════════════════════ */
-(function setupHoldButtons() {
-  const HOLD_MS = 2000;
-  const configs = [
-    { btnId: 'btnUrg', ringId: 'holdRingUrg', type: 'urgente' },
-    { btnId: 'btnAlr', ringId: 'holdRingAlr', type: 'alerta'  }
-  ];
-
-  configs.forEach(({ btnId, ringId, type }) => {
-    const btn  = document.getElementById(btnId);
-    const ring = document.getElementById(ringId);
-    let holdTimer  = null;
-    let startTime  = 0;
-    let rafHandle  = null;
-
-    function startHold(e) {
-      if (btn.disabled) return;
-      e.preventDefault();
-      initAudio();
-      startTime = Date.now();
-      btn.classList.add('holding');
-      animate();
-      holdTimer = setTimeout(() => {
-        cancelAnimationFrame(rafHandle);
-        ring.style.background = 'conic-gradient(rgba(255,255,255,0.5) 100%, transparent 100%)';
-        btn.classList.remove('holding');
-        openLocationModal(type);
-      }, HOLD_MS);
-    }
-
-    function cancelHold() {
-      clearTimeout(holdTimer); holdTimer = null;
-      cancelAnimationFrame(rafHandle);
-      ring.style.background = 'conic-gradient(rgba(255,255,255,0.5) 0%, transparent 0%)';
-      btn.classList.remove('holding');
-    }
-
-    function animate() {
-      const pct = Math.min(((Date.now() - startTime) / HOLD_MS) * 100, 100);
-      ring.style.background = `conic-gradient(rgba(255,255,255,0.5) ${pct}%, transparent ${pct}%)`;
-      if (pct < 100) rafHandle = requestAnimationFrame(animate);
-    }
-
-    btn.addEventListener('mousedown',   startHold);
-    btn.addEventListener('touchstart',  startHold, { passive: false });
-    btn.addEventListener('mouseup',     cancelHold);
-    btn.addEventListener('mouseleave',  cancelHold);
-    btn.addEventListener('touchend',    cancelHold);
-    btn.addEventListener('touchcancel', cancelHold);
+function connectToServer() {
+  if (typeof io === 'undefined') { updateConnectionStatus(false); return; }
+  socket = io({ transports: ['websocket', 'polling'] });
+  
+  socket.on('connect', () => { isConnected = true; updateConnectionStatus(true); socket.emit('register', { name: myName, role: myRole }); });
+  socket.on('disconnect', () => { isConnected = false; updateConnectionStatus(false); });
+  
+  socket.on('new_alert', (alert) => {
+    if (!alerts.find(a => a.id === alert.id)) { alerts.unshift(alert); renderAlerts(); if (alert.status === 'activa') { playAlarm(alert.type); showSaeOverlay(alert); showToast(`🚨 ${alert.type.toUpperCase()}: ${alert.sender} en ${alert.location}`, 'info'); } }
   });
-})();
+  socket.on('alerts_sync', (list) => { alerts = list; renderAlerts(); });
+  socket.on('alert_updated', (updated) => {
+    const idx = alerts.findIndex(a => a.id === updated.id);
+    if (idx >= 0) alerts[idx] = updated;
+    renderAlerts(); if (myRole === 'admin') loadHistorial();
+    if (updated.status === 'atendida') stopAlarm();
+  });
+  socket.on('users_update', (users) => renderUsers(users));
+}
+
+function updateConnectionStatus(connected) {
+  const dot = document.getElementById('connStatus'), count = document.getElementById('userCount');
+  if (connected) { dot.classList.remove('off'); dot.title = 'Conectado'; }
+  else { dot.classList.add('off'); dot.title = 'Modo offline'; count.textContent = '0'; }
+}
 
 /* ═══════════════════════════════════════════════════════════════
-   MODAL UBICACIÓN
+   TABS & UI
 ═══════════════════════════════════════════════════════════════ */
-function openLocationModal(type) {
-  pendingAlertType = type;
-  const title = document.getElementById('modalTitle');
-  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?' : '⚠️ ALERTA: ¿DÓNDE ESTÁS?';
-  title.className   = `modal-title ${type}`;
-  document.getElementById('locationModal').classList.add('visible');
+function switchTab(tab, btn) { document.querySelectorAll('.tab').forEach(b => b.classList.remove('active')); document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); btn.classList.add('active'); document.getElementById(tab).classList.add('active'); if (tab === 'receptor') renderAlerts(); if (tab === 'historial' && myRole === 'admin') loadHistorial(); }
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL UBICACIÓN Y ENVÍO INMEDIATO
+═══════════════════════════════════════════════════════════════ */
+function openLocationModal(type) { 
+  pendingAlertType = type; 
+  const title = document.getElementById('modalTitle'); 
+  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?' : type === 'accidente' ? '🟣 ACCIDENTE: ¿DÓNDE ESTÁS?' : '⚠️ ALERTA: ¿DÓNDE ESTÁS?'; 
+  title.className = `modal-title ${type}`; 
+  document.getElementById('locationModal').classList.add('visible'); 
 }
-function closeLocationModal() {
-  document.getElementById('locationModal').classList.remove('visible');
-  pendingAlertType = '';
+
+function closeLocationModal() { 
+  document.getElementById('locationModal').classList.remove('visible'); 
+  pendingAlertType = ''; 
 }
+
 function confirmAndSend(location) {
-  const type = pendingAlertType;
+  const type = pendingAlertType; 
   closeLocationModal();
-
-  const btnUrg = document.getElementById('btnUrg');
-  const btnAlr = document.getElementById('btnAlr');
-  const msgEl  = document.getElementById('statusMsg');
-
-  btnUrg.disabled = btnAlr.disabled = true;
-  const msg = type === 'urgente' ? `¡Ayuda urgente enviada desde ${location}!` : `Alerta emitida desde ${location}`;
-  msgEl.textContent = msg;
-  msgEl.className = `feedback-msg ${type}`;
-  playAlarm(type);
-
-  const message = type === 'urgente'
-    ? `¡NECESITO AYUDA URGENTE EN ${location}!`
-    : `⚠️ ALERTA EN ${location}`;
-
-  socket.emit('send_alert', { type, message, location });
-
-  // Demo offline
-  if (typeof io === 'undefined') {
-    setTimeout(() => showSaeOverlay({ type, message, sender: myName, location,
-      date: new Date().toLocaleDateString('es-CL'),
-      time: new Date().toLocaleTimeString('es-CL', { hour:'2-digit', minute:'2-digit' })
-    }), 500);
+  
+  const btns = [document.getElementById('btnUrg'), document.getElementById('btnAcc'), document.getElementById('btnAlr')];
+  btns.forEach(b => b.disabled = true);
+  
+  const now = new Date();
+  const alert = { 
+    id: Date.now().toString() + Math.random().toString(36).substr(2,6), 
+    type, 
+    sender: myName, 
+    location, 
+    message: type === 'urgente' ? `¡NECESITO AYUDA URGENTE EN ${location}!` : type === 'accidente' ? `🟣 ACCIDENTE REPORTADO EN ${location}` : `⚠️ ALERTA EN ${location}`, 
+    date: now.toLocaleDateString('es-CL'), 
+    time: now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}), 
+    status: 'activa' 
+  };
+  
+  if (isConnected && socket) { 
+    socket.emit('send_alert', { type, location, message: alert.message }); 
+  } else { 
+    alerts.unshift(alert); 
+    renderAlerts(); 
   }
-
-  setTimeout(() => {
-    btnUrg.disabled = btnAlr.disabled = false;
-    msgEl.textContent = ''; msgEl.className = 'feedback-msg';
+  
+  const msgs = { 
+    urgente: {fb:`🚨 EMERGENCIA enviada desde ${location}`,title:'🚨 EMERGENCIA · COLEGIO NSG',level:'EMERGENCIA · NIVEL ROJO',icon:'🆘'}, 
+    accidente: {fb:`🟣 ACCIDENTE reportado en ${location}`,title:'🟣 ACCIDENTE · COLEGIO NSG',level:'ACCIDENTE · NIVEL MORADO',icon:'🟣'}, 
+    alerta: {fb:`⚠️ ALERTA activada en ${location}`,title:'⚠️ ALERTA · COLEGIO NSG',level:'ALERTA · NIVEL NARANJA',icon:'⚠️'} 
+  };
+  const cfg = msgs[type];
+  
+  document.getElementById('statusMsg').textContent = cfg.fb;
+  document.getElementById('statusMsg').className = `feedback-msg ${type}`;
+  playAlarm(type);
+  
+  document.getElementById('saeBarText').textContent = cfg.title;
+  document.getElementById('saeLevel').textContent = cfg.level;
+  document.getElementById('saeIcon').textContent = cfg.icon;
+  showSaeOverlay(alert);
+  
+  if (myRole === 'admin') loadHistorial();
+  
+  setTimeout(() => { 
+    btns.forEach(b => b.disabled = false); 
+    document.getElementById('statusMsg').textContent = ''; 
+    document.getElementById('statusMsg').className = 'feedback-msg'; 
   }, 4000);
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MODAL RESOLUCIÓN
+   RESOLVE MODAL
 ═══════════════════════════════════════════════════════════════ */
-function openResolveModal(alertId) {
-  resolveTargetId = alertId;
-  document.getElementById('resolveNote').value = '';
-  document.getElementById('resolveModal').classList.add('visible');
-  setTimeout(() => document.getElementById('resolveNote').focus(), 200);
+function openResolveModal(alertId) { 
+  resolveTargetId = alertId; 
+  document.getElementById('resolveNote').value = ''; 
+  document.getElementById('resolveModal').classList.add('visible'); 
+  setTimeout(() => document.getElementById('resolveNote').focus(), 200); 
 }
-function closeResolveModal() {
-  document.getElementById('resolveModal').classList.remove('visible');
-  resolveTargetId = '';
+
+function closeResolveModal() { 
+  document.getElementById('resolveModal').classList.remove('visible'); 
+  resolveTargetId = ''; 
 }
+
 function confirmResolve() {
   const note = document.getElementById('resolveNote').value.trim();
-  socket.emit('resolve_alert', { alertId: resolveTargetId, note });
-  closeResolveModal();
-  closeSaeOverlay();
+  if (isConnected && socket) { 
+    socket.emit('resolve_alert', { alertId: resolveTargetId, note }); 
+  } else {
+    const alert = alerts.find(a => a.id === resolveTargetId);
+    if (alert) { 
+      alert.status = 'atendida'; 
+      alert.resolve_note = note; 
+      alert.resolved_by = myName; 
+    }
+  }
+  stopAlarm();
+  closeResolveModal(); 
+  closeSaeOverlay(); 
+  renderAlerts(); 
+  if (myRole === 'admin') loadHistorial();
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   OVERLAY SAE
+   SAE OVERLAY (CORREGIDO PARA CERRAR)
 ═══════════════════════════════════════════════════════════════ */
 function showSaeOverlay(alert) {
-  const isUrg = alert.type === 'urgente';
+  const isUrg = alert.type === 'urgente', isAcc = alert.type === 'accidente';
   const overlay = document.getElementById('saeOverlay');
-  document.getElementById('saeBar').className  = `sae-bar ${alert.type}`;
+  if (!overlay) return;
+  document.getElementById('saeBar').className = `sae-bar ${alert.type}`;
   document.getElementById('saeBody').className = `sae-body ${alert.type}`;
-  document.getElementById('saeBarText').textContent  = isUrg ? '🚨 EMERGENCIA · COLEGIO NSG' : '⚠️ ALERTA · COLEGIO NSG';
-  document.getElementById('saeIcon').textContent     = isUrg ? '🆘' : '⚠️';
-  document.getElementById('saeLevel').textContent    = isUrg ? 'EMERGENCIA · NIVEL ROJO' : 'ALERTA · NIVEL NARANJA';
-  document.getElementById('saeMessage').textContent  = alert.message;
-  document.getElementById('saeSender').textContent   = alert.sender;
+  document.getElementById('saeBarText').textContent = isUrg ? '🚨 EMERGENCIA · COLEGIO NSG' : isAcc ? '🟣 ACCIDENTE · COLEGIO NSG' : '⚠️ ALERTA · COLEGIO NSG';
+  document.getElementById('saeIcon').textContent = isUrg ? '🆘' : isAcc ? '🟣' : '⚠️';
+  document.getElementById('saeLevel').textContent = isUrg ? 'EMERGENCIA · NIVEL ROJO' : isAcc ? 'ACCIDENTE · NIVEL MORADO' : 'ALERTA · NIVEL NARANJA';
+  document.getElementById('saeMessage').textContent = alert.message;
+  document.getElementById('saeSender').textContent = alert.sender;
   document.getElementById('saeLocation').textContent = alert.location || '—';
-  document.getElementById('saeTime').textContent     = `${alert.date} ${alert.time}`;
-  document.getElementById('saeTimeBadge').textContent= `${alert.date} · ${alert.time}`;
+  document.getElementById('saeTime').textContent = `${alert.date} ${alert.time}`;
+  document.getElementById('saeTimeBadge').textContent = `${alert.date} · ${alert.time}`;
   overlay.classList.add('visible');
 }
-function closeSaeOverlay() {
-  document.getElementById('saeOverlay').classList.remove('visible');
-  stopAlarm();
+
+function closeSaeOverlay() { 
+  const overlay = document.getElementById('saeOverlay');
+  if (overlay) {
+    overlay.classList.remove('visible');
+  }
+  try { stopAlarm(); } catch(e) { console.error(e); }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RENDER ALERTAS ACTIVAS
+   RENDER ALERTS & USERS
 ═══════════════════════════════════════════════════════════════ */
 function renderAlerts() {
   const container = document.getElementById('alertsContainer');
   const active = alerts.filter(a => a.status !== 'atendida');
-  if (active.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>`;
-    return;
+  if (active.length === 0) { 
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>`; 
+    return; 
   }
   container.innerHTML = active.map(a => {
-    const isCoord = myRole === 'coordinador';
+    const isAdmin = myRole === 'admin';
     const seenDis = a.status !== 'activa' ? 'disabled' : '';
-    const attDis  = a.status === 'atendida' ? 'disabled' : '';
-    const seenBtn = isCoord
-      ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>`
-      : '';
-    const attBtn  = isCoord
-      ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>`
-      : '';
-    const seenInfo = a.seen_by ? `<div class="alert-row"><span class="lbl">Visto por</span><span class="val">${a.seen_by}</span></div>` : '';
-    return `
-      <div class="alert-card ${a.type === 'alerta' ? 'tipo-alerta' : ''} status-${a.status}">
-        <div class="alert-header">
-          <div class="alert-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</div>
-          <span class="alert-status-badge badge-${a.status}">${a.status.toUpperCase()}</span>
-        </div>
-        <div class="alert-meta">
-          <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
-          <div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div>
-          <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${(a.time||'').slice(0,5)}</span></div>
-          ${seenInfo}
-        </div>
-        <div class="alert-actions">${seenBtn}${attBtn}</div>
-      </div>`;
+    const attDis = a.status === 'atendida' ? 'disabled' : '';
+    const seenBtn = isAdmin ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>` : '';
+    const attBtn = `<button class="btn-ack btn-attend" onclick="${isAdmin ? `openResolveModal('${a.id}')` : `confirmResolveDirect('${a.id}')`}" ${attDis}>✓ Atender</button>`;
+    const tipoClass = a.type === 'alerta' ? 'tipo-alerta' : a.type === 'accidente' ? 'tipo-accidente' : '';
+    return `<div class="alert-card ${tipoClass} status-${a.status}"><div class="alert-header"><div class="alert-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : a.type === 'accidente' ? '🟣 ACCIDENTE' : '⚠️ ALERTA'}</div><span class="alert-status-badge badge-${a.status}">${a.status.toUpperCase()}</span></div><div class="alert-meta"><div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div><div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div><div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${(a.time||'').slice(0,5)}</span></div></div><div class="alert-actions">${seenBtn}${attBtn}</div></div>`;
   }).join('');
 }
 
-function markSeen(alertId) {
-  socket.emit('mark_seen', { alertId });
+function markSeen(alertId) { 
+  if (isConnected && socket) socket.emit('mark_seen', { alertId }); 
+  else { 
+    const a = alerts.find(x => x.id === alertId); 
+    if (a && a.status === 'activa') { 
+      a.status = 'vista'; 
+      a.seen_by = myName; 
+      renderAlerts(); 
+    } 
+  } 
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   RENDER USUARIOS
-═══════════════════════════════════════════════════════════════ */
-function renderUsers() {
-  document.getElementById('userCount').textContent = connectedUsers.length;
-  const list = document.getElementById('usersList');
-  if (!connectedUsers.length) {
-    list.innerHTML = '<p style="color:var(--muted);font-size:0.85rem">Sin usuarios conectados</p>';
-    return;
+function confirmResolveDirect(alertId) { 
+  resolveTargetId = alertId; 
+  confirmResolve(); 
+}
+
+function renderUsers(users) {
+  const list = document.getElementById('usersList'), count = document.getElementById('userCount');
+  if (!users || users.length === 0) { 
+    list.innerHTML = `<p style="color:var(--muted);font-size:0.85rem">Sin usuarios conectados</p>`; 
+    count.textContent = '0'; 
+    return; 
   }
-  list.innerHTML = connectedUsers.map(u => `
-    <div class="user-item">
-      <span class="user-dot"></span>
-      <span>${u.name}</span>
-      <span class="user-role ${u.role}">${u.role === 'coordinador' ? '🟣 Coordinador' : '🔵 Emisor'}</span>
-    </div>`).join('');
+  count.textContent = users.length;
+  list.innerHTML = users.map(u => `<div class="user-item"><span class="user-dot"></span>${u.name}<span class="user-role ${u.role}">${u.role === 'admin' ? 'Admin' : u.role}</span></div>`).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HISTORIAL
+   HISTORIAL & EXPORT
 ═══════════════════════════════════════════════════════════════ */
 async function loadHistorial() {
-  const estado = document.getElementById('filtEstado').value;
-  const tipo   = document.getElementById('filtTipo').value;
-  let url = '/api/historial?limit=200';
-  if (estado) url += '&estado=' + estado;
-  if (tipo)   url += '&tipo=' + tipo;
-
-  const container = document.getElementById('histContainer');
-  container.innerHTML = '<div class="empty-state"><p>Cargando…</p></div>';
-
-  try {
-    const res  = await fetch(url);
-    const data = await res.json();
-    document.getElementById('histCount').textContent = `${data.total} registros encontrados`;
-    if (data.total === 0) {
-      container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros</p></div>';
-      return;
+  if (myRole !== 'admin') return;
+  const container = document.getElementById('histContainer'), countEl = document.getElementById('histCount');
+  const estado = document.getElementById('filtEstado').value, tipo = document.getElementById('filtTipo').value;
+  
+  if (isConnected) {
+    try {
+      const params = new URLSearchParams({ estado: estado || undefined, tipo: tipo || undefined });
+      const res = await fetch(`/api/historial?${params}`);
+      const data = await res.json();
+      if (data.ok) renderHistorial(data.alerts);
+      countEl.textContent = `${data.total || 0} registros`;
+    } catch(e) { 
+      console.error('Historial error:', e); 
+      container.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Error cargando historial</p></div>`; 
     }
-    container.innerHTML = data.alerts.map(a => `
-      <div class="hist-card ${a.type} ${a.status}">
-        <div class="hist-header">
-          <span class="hist-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : '⚠️ ALERTA'}</span>
-          <span class="hist-time">${a.date} ${(a.time||'').slice(0,5)}</span>
-        </div>
-        <div class="hist-row">👤 <b>${a.sender}</b> — 📍 <b>${a.location}</b></div>
-        <div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status.toUpperCase()}</b>
-          ${a.resolved_by ? `• Atendido por <b>${a.resolved_by}</b>` : ''}
-          ${a.seen_by && !a.resolved_by ? `• Visto por <b>${a.seen_by}</b>` : ''}
-        </div>
-        ${a.resolve_note ? `<div class="hist-note">💬 "${a.resolve_note}"</div>` : ''}
-      </div>`).join('');
-  } catch(err) {
-    container.innerHTML = '<div class="empty-state"><p>Error al cargar historial</p></div>';
+  } else {
+    let filtered = alerts;
+    if (estado) filtered = filtered.filter(a => a.status === estado);
+    if (tipo) filtered = filtered.filter(a => a.type === tipo);
+    renderHistorial(filtered);
+    countEl.textContent = `${filtered.length} registros`;
   }
+}
+
+function renderHistorial(list) {
+  const container = document.getElementById('histContainer');
+  if (!list || list.length === 0) { 
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros</p></div>`; 
+    return; 
+  }
+  container.innerHTML = list.map(a => {
+    const tipoClass = a.type === 'alerta' ? 'alerta' : a.type === 'accidente' ? 'accidente' : a.type;
+    return `<div class="hist-card ${tipoClass} ${a.status}"><div class="hist-header"><span class="hist-tipo ${a.type}">${a.type === 'urgente' ? '🆘 URGENTE' : a.type === 'accidente' ? '🟣 ACCIDENTE' : '⚠️ ALERTA'}</span><span class="hist-time">${a.date} ${(a.time||'').slice(0,5)}</span></div><div class="hist-row">👤 <b>${a.sender}</b> — 📍 <b>${a.location}</b></div><div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status.toUpperCase()}</b></div>${a.resolved_by ? `<div class="hist-row">Atendido por: <b>${a.resolved_by}</b></div>`:''}${a.resolve_note ? `<div class="hist-note">💬 "${a.resolve_note}"</div>`:''}</div>`;
+  }).join('');
+}
+
+function filterHistorial() { loadHistorial(); }
+
+function exportCSV() {
+  const rows = [['ID','Fecha','Hora','Tipo','Emisor','Ubicación','Mensaje','Estado','Visto por','Atendido por','Nota']];
+  (alerts || []).forEach(a => rows.push([a.id, a.date, a.time, a.type.toUpperCase(), a.sender, a.location, a.message || '', a.status, a.seen_by || '', a.resolved_by || '', a.resolve_note || '']));
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `alertas_nsg_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  showToast('📥 CSV exportado', 'success');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   NOTIFICACIONES
+   TOAST & PWA
 ═══════════════════════════════════════════════════════════════ */
-function requestNotifPerm() {
-  if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-}
-function showNotif(title, body) {
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification(title, { body, requireInteraction: true });
-  }
+function showToast(msg, type='info') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `show ${type}`;
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SERVICE WORKER + PUSH
-═══════════════════════════════════════════════════════════════ */
-let swRegistration = null;
-async function initServiceWorker() {
-  if (!('serviceWorker' in navigator)) return;
-  try {
-    swRegistration = await navigator.serviceWorker.register('/service-worker.js');
-    console.log('✅ SW registrado');
-  } catch(err) { console.warn('SW no registrado:', err); }
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/serviceworker.js').then(reg => {
+    reg.pushManager.getSubscription().then(sub => {
+      if (!sub && isConnected) requestPushSub();
+    });
+  });
 }
 
-navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SHOW_SAE') {
-    const a = event.data.alert;
-    if (a) { initAudio(); playAlarm(a.type); showSaeOverlay(a); }
-  }
-});
-
-async function subscribePush() {
-  if (!swRegistration || !('PushManager' in window)) return;
+async function requestPushSub() {
   try {
     const res = await fetch('/vapid-public-key');
     if (!res.ok) return;
     const { key } = await res.json();
-    const sub = await swRegistration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(key)
-    });
-    await fetch('/push-subscribe', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ socketId: socket.id, subscription: sub })
-    });
-    console.log('✅ Push suscrito');
-  } catch(err) { console.warn('Push:', err.message); }
+    const sub = await navigator.serviceWorker.ready.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key) });
+    await fetch('/push-subscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ socketId: socket.id, subscription: sub }) });
+  } catch(e) { console.warn('Push no disponible'); }
 }
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64  = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw     = atob(base64);
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   EVENTOS SOCKET
-═══════════════════════════════════════════════════════════════ */
-if (typeof io !== 'undefined') {
-  socket.on('connect', () => {
-    document.getElementById('connStatus').classList.remove('off');
-    if (myName) socket.emit('register', { name: myName, role: myRole });
-  });
-  socket.on('disconnect', () => {
-    document.getElementById('connStatus').classList.add('off');
-  });
-  socket.on('new_alert', alert => {
-    alerts.unshift(alert);
-    playAlarm(alert.type);
-    showNotif('🚨 ALERTA NSG', `${alert.sender} en ${alert.location}`);
-    showSaeOverlay(alert);
-    renderAlerts();
-  });
-  socket.on('alert_updated', updated => {
-    const idx = alerts.findIndex(a => a.id === updated.id);
-    if (idx >= 0) alerts[idx] = updated; else alerts.unshift(updated);
-    renderAlerts();
-  });
-  socket.on('alerts_sync', synced => {
-    alerts = synced; renderAlerts();
-  });
-  socket.on('users_update', users => {
-    connectedUsers = users; renderUsers();
-  });
-}
-
-/* PWA install */
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredPrompt = e;
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.style.display = 'inline-flex';
-});
-window.addEventListener('appinstalled', () => {
-  deferredPrompt = null;
-  const btn = document.getElementById('installBtn');
-  if (btn) btn.style.display = 'none';
-});
-window.triggerInstall = function() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
-};
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredPrompt = e; const btn = document.getElementById('installBtn'); if (btn) btn.style.display = 'inline-flex'; });
+window.addEventListener('appinstalled', () => { deferredPrompt = null; const btn = document.getElementById('installBtn'); if (btn) btn.style.display = 'none'; });
+function triggerInstall() { if (!deferredPrompt) return; deferredPrompt.prompt(); deferredPrompt.userChoice.then(() => { deferredPrompt = null; }); }
 
-window.addEventListener('load', () => initServiceWorker());
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data?.type === 'SHOW_SAE' && event.data?.alert) {
+      showSaeOverlay(event.data.alert);
+      playAlarm(event.data.alert.type);
+    }
+  });
+}
 </script>
 </body>
 </html>
