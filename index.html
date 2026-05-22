@@ -11,7 +11,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pánico NSG">
   <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -28,6 +27,11 @@
       <div>
         <div class="field-label">Tu nombre</div>
         <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
+      </div>
+      <div>
+        <div class="field-label">Contraseña</div>
+        <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña del sistema" autocomplete="current-password">
+        <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
         <div class="field-label">Tipo de usuario</div>
@@ -50,6 +54,7 @@
         <div class="topbar-role" id="roleLabel"></div>
       </div>
       <span class="conn-dot off" id="connStatus" title="Modo offline"></span>
+      <button class="btn-logout" onclick="logoutApp()" title="Cerrar sesión">⏻</button>
     </div>
   </div>
 
@@ -268,22 +273,37 @@ function selectRole(role, element) {
 
 async function enterApp() {
   const nameInput = document.getElementById('userNameInput');
+  const passInput = document.getElementById('userPasswordInput');
+  const loginError = document.getElementById('loginError');
   myName = nameInput.value.trim() || 'Usuario';
+
   if (myName.length < 2) {
     nameInput.style.borderColor = 'var(--red)';
-    setTimeout(() => nameInput.style.borderColor = '', 500);
+    setTimeout(() => nameInput.style.borderColor = '', 800);
     return;
   }
-  const expectedPin = myRole === 'admin' ? '2026' : '1234';
-  try {
-    const res = await fetch('/auth/verify-pin', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ pin: expectedPin })
-    });
-    const data = await res.json();
-    if (!data.ok) { showToast('PIN incorrecto', 'error'); return; }
-  } catch(e) { console.warn('Auth offline mode'); }
+
+  // Validar contraseña del sistema
+  const password = passInput ? passInput.value.trim() : '';
+  if (password !== 'guadalupe2026') {
+    if (loginError) loginError.style.display = 'block';
+    if (passInput) { passInput.style.borderColor = 'var(--red)'; passInput.value = ''; }
+    setTimeout(() => { if (passInput) passInput.style.borderColor = ''; }, 800);
+    return;
+  }
+  if (loginError) loginError.style.display = 'none';
+
+  // Si es admin, verificar PIN
+  if (myRole === 'admin') {
+    try {
+      const res = await fetch('/auth/verify-pin', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ pin: '2026' })
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast('PIN de admin incorrecto', 'error'); return; }
+    } catch(e) { console.warn('Auth offline mode'); }
+  }
 
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
@@ -304,165 +324,40 @@ async function enterApp() {
   if (myRole === 'admin') loadHistorial();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   CONEXIÓN SOCKET.IO
-═══════════════════════════════════════════════════════════════ */
-function connectToServer() {
-  if (typeof io === 'undefined') { updateConnectionStatus(false); return; }
-  socket = io({ transports: ['websocket', 'polling'] });
+function logoutApp() {
+  stopAlarm();
+  closeSaeOverlay(true);
+  if (socket) { socket.disconnect(); socket = null; }
+  isConnected = false;
+  myName = ''; myRole = 'emisor';
+  alerts = []; localHistorial = [];
+  silencedAlerts.clear();
+  currentSoundingAlertId = null;
+  currentDisplayedAlertId = null;
 
-  socket.on('connect', () => {
-    isConnected = true;
-    updateConnectionStatus(true);
-    socket.emit('register', { name: myName, role: myRole });
-    if ('serviceWorker' in navigator) requestPushSub();
-  });
+  // Resetear formulario
+  const nameInput = document.getElementById('userNameInput');
+  const passInput = document.getElementById('userPasswordInput');
+  const loginError = document.getElementById('loginError');
+  if (nameInput) nameInput.value = '';
+  if (passInput) passInput.value = '';
+  if (loginError) loginError.style.display = 'none';
+  document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
+  const emisorOpt = document.querySelector('.role-option.emisor');
+  if (emisorOpt) emisorOpt.classList.add('active');
 
-  socket.on('disconnect', () => {
-    isConnected = false;
-    updateConnectionStatus(false);
-  });
+  // Resetear tabs
+  const tabsRow = document.getElementById('tabsRow');
+  tabsRow.className = 'tabs emisor-tabs';
+  tabsRow.innerHTML = `
+    <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
+    <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>`;
 
-  socket.on('new_alert', (alert) => {
-    if (!alerts.find(a => a.id === alert.id)) {
-      alerts.unshift(alert);
-      localHistorial.unshift(alert);
-      renderAlerts();
-      if (alert.status === 'activa') {
-        // No sonar ni mostrar si ya fue silenciada por este cliente
-        if (!silencedAlerts.has(alert.id)) {
-          playAlarm(alert.type, alert.id);
-          showSaeOverlay(alert);
-          showToast(`🚨 ${alert.type.toUpperCase()}: ${alert.sender} en ${alert.location}`, 'info');
-        }
-      }
-    } else {
-      // La alerta ya existe (rebote del propio emisor) — solo actualizar lista sin sonar
-      renderAlerts();
-    }
-  });
-
-  socket.on('alerts_sync', (list) => {
-    alerts = list;
-    localHistorial = list;
-    renderAlerts();
-    // No se vuelve a sonar en sync — solo actualiza la UI
-    if (myRole === 'admin') loadHistorial();
-  });
-
-  socket.on('alert_updated', (updated) => {
-    const idx = alerts.findIndex(a => a.id === updated.id);
-    if (idx >= 0) {
-      alerts[idx] = updated;
-      const hIdx = localHistorial.findIndex(a => a.id === updated.id);
-      if (hIdx >= 0) localHistorial[hIdx] = updated;
-    }
-    renderAlerts();
-    if (myRole === 'admin') loadHistorial();
-
-    // Si otro admin marcó como atendida y es la que está sonando aquí, silenciar
-    if (updated.status === 'atendida') {
-      if (currentSoundingAlertId === updated.id) stopAlarm();
-      const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
-      if (overlayVisible) closeSaeOverlay(true);
-    }
-  });
-
-  socket.on('users_update', (users) => renderUsers(users));
+  // Volver al login
+  document.getElementById('appMain').style.display = 'none';
+  document.getElementById('welcomeScreen').style.display = 'flex';
 }
 
-function updateConnectionStatus(connected) {
-  const dot = document.getElementById('connStatus');
-  const count = document.getElementById('userCount');
-  if (connected) {
-    dot.classList.remove('off');
-    dot.title = 'Conectado al servidor';
-    count.textContent = '—';
-  } else {
-    dot.classList.add('off');
-    dot.title = 'Modo offline';
-    count.textContent = '0';
-  }
-}
-
-function switchTab(tab, btn) {
-  document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById(tab).classList.add('active');
-  if (tab === 'receptor') renderAlerts();
-  if (tab === 'historial' && myRole === 'admin') loadHistorial();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   EMISIÓN DE ALERTAS
-═══════════════════════════════════════════════════════════════ */
-function openLocationModal(type) {
-  pendingAlertType = type;
-  const title = document.getElementById('modalTitle');
-  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?'
-                 : type === 'accidente' ? '🟣 ACCIDENTE: ¿DÓNDE ESTÁS?'
-                 : '⚠️ ALERTA: ¿DÓNDE ESTÁS?';
-  title.className = `modal-title ${type}`;
-  document.getElementById('locationModal').classList.add('visible');
-}
-
-function closeLocationModal() {
-  document.getElementById('locationModal').classList.remove('visible');
-  pendingAlertType = '';
-}
-
-function confirmAndSend(location) {
-  const type = pendingAlertType;
-  closeLocationModal();
-
-  const btnUrg = document.getElementById('btnUrg');
-  const btnAcc = document.getElementById('btnAcc');
-  const btnAlr = document.getElementById('btnAlr');
-  const msgEl  = document.getElementById('statusMsg');
-  btnUrg.disabled = btnAcc.disabled = btnAlr.disabled = true;
-
-  /*
-   * FIX emisor: el emisor muestra el overlay con un ID temporal local.
-   * Cuando el servidor rebota new_alert con el ID real, ese ID NO está en
-   * silencedAlerts, por lo que sonaría de nuevo. Para evitarlo, al llegar
-   * new_alert del servidor para el propio emisor, lo detectamos porque el
-   * overlay ya está visible y simplemente actualizamos la alerta en la lista
-   * sin volver a sonar (el check silencedAlerts.has(alert.id) lo filtra solo
-   * si usamos el mismo ID — pero como el emisor ya tiene sonido activo con
-   * currentSoundingAlertId, usamos una bandera adicional: myPendingSend).
-   */
-  myPendingSend = true; // señal para ignorar el next new_alert que rebote al emisor
-
-  const now = new Date();
-  const alert = {
-    id: `local-${Date.now()}`,
-    type, sender: myName, location,
-    message: type === 'urgente' ? `¡NECESITO AYUDA URGENTE EN ${location}!`
-              : type === 'accidente' ? `🟣 ACCIDENTE REPORTADO EN ${location}`
-              : `⚠️ ALERTA EN ${location}`,
-    date: now.toLocaleDateString('es-CL'),
-    time: now.toLocaleTimeString('es-CL', {hour:'2-digit', minute:'2-digit'}),
-    status: 'activa'
-  };
-
-  if (isConnected && socket) {
-    socket.emit('send_alert', { type, location, message: alert.message });
-  }
-
-  const msg = type === 'urgente' ? '¡Ayuda urgente enviada!'
-              : type === 'accidente' ? '¡Alerta de accidente enviada!'
-              : 'Alerta emitida';
-  msgEl.textContent = msg;
-  msgEl.className = `feedback-msg ${type}`;
-  playAlarm(type, alert.id);
-  showSaeOverlay(alert);
-
-  setTimeout(() => {
-    btnUrg.disabled = btnAcc.disabled = btnAlr.disabled = false;
-    msgEl.textContent = ''; msgEl.className = 'feedback-msg';
-  }, 4000);
-}
 
 // Bandera para que el emisor no suene de nuevo cuando recibe su propio rebote
 let myPendingSend = false;
