@@ -203,6 +203,7 @@ let isConnected = false;
  */
 const silencedAlerts = new Set();   // IDs ya silenciados por este cliente
 let currentSoundingAlertId = null;  // ID de la alerta que suena ahora mismo
+let currentDisplayedAlertId = null; // ID visible en el overlay ahora mismo
 
 /* ═══════════════════════════════════════════════════════════════
    AUDIO
@@ -374,13 +375,16 @@ function connectToServer() {
       localHistorial.unshift(alert);
       renderAlerts();
       if (alert.status === 'activa') {
-        // FIX: no sonar si ya fue silenciada por este cliente
+        // No sonar ni mostrar si ya fue silenciada por este cliente
         if (!silencedAlerts.has(alert.id)) {
           playAlarm(alert.type, alert.id);
           showSaeOverlay(alert);
           showToast(`🚨 ${alert.type.toUpperCase()}: ${alert.sender} en ${alert.location}`, 'info');
         }
       }
+    } else {
+      // La alerta ya existe (rebote del propio emisor) — solo actualizar lista sin sonar
+      renderAlerts();
     }
   });
 
@@ -536,6 +540,11 @@ function confirmResolve() {
    OVERLAY SAE
 ═══════════════════════════════════════════════════════════════ */
 function showSaeOverlay(alert) {
+  // Si esta alerta ya fue silenciada, no mostrar de nuevo
+  const alertId = alert.id || alert.alertId;
+  if (silencedAlerts.has(alertId)) return;
+
+  currentDisplayedAlertId = alertId;
   const isUrg = alert.type === 'urgente';
   const isAcc = alert.type === 'accidente';
   document.getElementById('saeBar').className  = `sae-bar ${alert.type}`;
@@ -561,9 +570,13 @@ function showSaeOverlay(alert) {
  */
 function closeSaeOverlay(silent = false) {
   document.getElementById('saeOverlay').classList.remove('visible');
+  // Registrar el ID del overlay como silenciado — esto es lo que impide
+  // que new_alert rebotado vuelva a mostrarlo
+  if (currentDisplayedAlertId) {
+    silencedAlerts.add(currentDisplayedAlertId);
+    currentDisplayedAlertId = null;
+  }
   if (!silent) {
-    // FIX MÓVIL: initAudio() primero para reanudar contexto suspendido,
-    // luego stopAlarm() para detener y registrar en silencedAlerts
     initAudio();
     stopAlarm();
   }
