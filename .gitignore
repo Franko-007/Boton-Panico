@@ -6,3 +6,13 @@ yarn-error.log*
 .env.local
 .DS_Store
 *.log
+# Variables de entorno y credenciales
+.env
+
+# Base de datos local SQLite
+alerts.db
+alerts.db-shm
+alerts.db-wal
+
+# Dependencias de Node
+node_modules/
