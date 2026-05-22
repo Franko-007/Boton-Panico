@@ -22,7 +22,6 @@ body {
   display: flex; flex-direction: column;
 }
 
-/* ── PANTALLA DE BIENVENIDA ──────────────────── */
 #welcomeScreen {
   position: fixed; inset: 0; background: var(--bg); z-index: 2000;
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
@@ -49,9 +48,7 @@ body {
   outline: none; transition: border-color 0.2s;
 }
 .field-input:focus { border-color: var(--blue-lite); }
-.role-selector {
-  display: flex; gap: 10px; margin: 8px 0;
-}
+.role-selector { display: flex; gap: 10px; margin: 8px 0; }
 .role-option {
   flex: 1; padding: 12px; border: 1.5px solid var(--border);
   background: var(--bg); border-radius: 10px;
@@ -72,14 +69,7 @@ body {
 }
 .btn-enter:hover { background: #1d4ed8; }
 .btn-enter:active { transform: scale(0.98); }
-.demo-notice {
-  font-size: 0.78rem; color: var(--muted); text-align: center;
-  margin-top: 16px; padding: 10px;
-  background: rgba(245,158,11,0.1); border-radius: 8px;
-  border: 1px solid rgba(245,158,11,0.3);
-}
 
-/* ── APP PRINCIPAL ────────────────────────────────────────── */
 #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -94,7 +84,6 @@ body {
 .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
 .conn-dot.off { background: var(--red); animation: none; }
 
-/* ── TABS ─────────────────────────────────────────────────── */
 .tabs { display: grid; gap: 6px; margin-bottom: 14px; }
 .tabs.emisor-tabs    { grid-template-columns: 1fr 1fr; }
 .tabs.admin-tabs     { grid-template-columns: 1fr 1fr 1fr; }
@@ -108,11 +97,9 @@ body {
 .tab:hover { border-color: var(--blue-lite); color: var(--text); }
 .tab.active { background: var(--blue); border-color: var(--blue); color: white; }
 
-/* ── PANELES ──────────────────────────────────────────────── */
 .panel { display: none; }
 .panel.active { display: block; }
 
-/* ── EMISOR ───────────────────────────────────────────────── */
 .btn-grid { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 16px 0 24px; }
 .panic-btn {
   border-radius: 50%; border: none; color: white;
@@ -144,9 +131,7 @@ body {
   border: 5px solid #c4b5fd;
   box-shadow: 0 0 35px rgba(139,92,246,0.6), 0 6px 20px rgba(0,0,0,0.5);
 }
-.btn-accidente:hover:not(:disabled) { 
-  box-shadow: 0 0 55px rgba(139,92,246,0.8), 0 6px 24px rgba(0,0,0,0.5); 
-}
+.btn-accidente:hover:not(:disabled) { box-shadow: 0 0 55px rgba(139,92,246,0.8), 0 6px 24px rgba(0,0,0,0.5); }
 .hold-hint { font-size: 0.75rem; opacity: 0.8; margin-top: 6px; letter-spacing: 1px; }
 
 .feedback-msg {
@@ -158,7 +143,6 @@ body {
 .feedback-msg.alerta  { color: var(--amber); animation: flash 0.8s infinite; }
 .feedback-msg.accidente { color: var(--purple); animation: flash 0.8s infinite; }
 
-/* ── MODAL UBICACIÓN ──────────────────────────────────────── */
 #locationModal {
   position: fixed; inset: 0; z-index: 5000;
   background: rgba(5,7,14,0.95);
@@ -201,7 +185,6 @@ body {
 }
 .btn-cancel-modal:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.08); }
 
-/* ── MODAL RESOLUCIÓN ─────────────────────────────────────── */
 #resolveModal {
   position: fixed; inset: 0; z-index: 6000;
   background: rgba(5,7,14,0.96);
@@ -236,7 +219,6 @@ body {
 }
 .btn-resolve-cancel:hover { border-color: var(--text); color: var(--text); }
 
-/* ── PANEL RECEPTOR ───────────────────────────────────────── */
 .section-title {
   font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700;
   letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
@@ -249,9 +231,7 @@ body {
 .alert-card.tipo-accidente { border-left-color: var(--purple); }
 .alert-card.status-vista { border-left-color: var(--blue-lite); opacity: 0.85; }
 .alert-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-.alert-tipo {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;
-}
+.alert-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; }
 .alert-tipo.urgente { color: var(--red); }
 .alert-tipo.alerta  { color: var(--amber); }
 .alert-tipo.accidente { color: var(--purple); }
@@ -281,10 +261,7 @@ body {
 .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
 .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
 
-/* ── PANEL HISTORIAL ──────────────────────────────────────── */
-.historial-filters {
-  display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;
-}
+.historial-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .filter-select {
   padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border);
   border-radius: 8px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.85rem;
@@ -316,7 +293,6 @@ body {
 .hist-row b { color: var(--text); font-weight: 600; }
 .hist-note { color: #86efac; font-style: italic; margin-top: 4px; }
 
-/* ── USUARIOS ─────────────────────────────────────────────── */
 .users-box {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; margin-top: 18px;
@@ -327,7 +303,6 @@ body {
 .user-role { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
 .user-role.admin { color: #a78bfa; }
 
-/* ── OVERLAY SAE ──────────────────────────────────────────── */
 #saeOverlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   width: 100%; height: 100%; z-index: 9999;
@@ -385,7 +360,6 @@ body {
   font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
 }
 
-/* ── KEYFRAMES ────────────────────────────────────────────── */
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
 @keyframes shake     { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
@@ -397,4 +371,7 @@ body {
   .btn-alerta  { width: 155px; height: 155px; font-size: 0.95rem; }
   .btn-accidente { width: 175px; height: 175px; font-size: 1rem; }
   .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
+}
+@media (max-width: 480px) {
+  .btn-sae-close { margin-bottom: 20px; }
 }
