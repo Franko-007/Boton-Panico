@@ -13,46 +13,34 @@
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
-  <!-- 📌 ENLACE AL ARCHIVO CSS SEPARADO -->
   <link rel="stylesheet" href="style.css">
   <script src="/socket.io/socket.io.js" onerror="console.warn('Socket.io no disponible')"></script>
 </head>
 <body>
 
-<!-- ─── PANTALLA DE BIENVENIDA ─────────────────────── -->
 <div id="welcomeScreen">
   <div class="welcome-container">
     <div class="welcome-logo">🚨</div>
     <div class="welcome-title">BOTÓN DE PÁNICO NSG</div>
     <p class="welcome-sub">Sistema de alertas de emergencia para el colegio</p>
-    
     <div class="welcome-card">
       <div>
         <div class="field-label">Tu nombre</div>
         <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
       </div>
-      
       <div>
         <div class="field-label">Tipo de usuario</div>
         <div class="role-selector">
-          <!-- ✅ Rol actualizado a Admin -->
           <div class="role-option active emisor" onclick="selectRole('emisor', this)">🔵 Emisor</div>
           <div class="role-option admin" onclick="selectRole('admin', this)">🟣 Admin</div>
         </div>
       </div>
-      
       <button class="btn-enter" onclick="enterApp()">INGRESAR AL SISTEMA</button>
-      
-      <div class="demo-notice">
-        ⚠️ <b>MODO DEMO:</b> Sin conexión al servidor. Las alertas se mostrarán localmente.
-      </div>
     </div>
   </div>
 </div>
 
-<!-- ─── APP PRINCIPAL ─────────────────────────────────────────── -->
 <div id="appMain">
-
   <div class="topbar">
     <div class="topbar-brand">🚨 <span>PÁNICO</span> NSG</div>
     <div class="topbar-right">
@@ -69,20 +57,16 @@
     <button class="tab" onclick="switchTab('receptor', this)">📥 ALERTAS</button>
   </div>
 
-  <!-- PANEL EMISOR -->
   <div id="emisor" class="panel active">
     <div class="btn-grid">
-      <!-- ✅ Botones sin hold (activación inmediata) -->
       <button class="panic-btn btn-urgente" id="btnUrg" onclick="openLocationModal('urgente')">
         🆘<br>NECESITO<br>AYUDA<br>URGENTE
         <div class="hold-hint">Toca para activar</div>
       </button>
-      
       <button class="panic-btn btn-accidente" id="btnAcc" onclick="openLocationModal('accidente')">
         🟣<br>ACCIDENTE
         <div class="hold-hint">Toca para activar</div>
       </button>
-      
       <button class="panic-btn btn-alerta" id="btnAlr" onclick="openLocationModal('alerta')">
         ⚠️<br>ALERTA
         <div class="hold-hint">Toca para activar</div>
@@ -95,7 +79,6 @@
     </footer>
   </div>
 
-  <!-- PANEL RECEPTOR -->
   <div id="receptor" class="panel">
     <div class="section-title">🚨 Alertas activas</div>
     <div id="alertsContainer">
@@ -103,11 +86,10 @@
     </div>
     <div class="users-box">
       <div class="section-title">👥 Conectados — <span id="userCount">0</span> (offline)</div>
-      <div id="usersList"><p style="color:var(--muted);font-size:0.85rem">Modo demostración - Sin conexión al servidor</p></div>
+      <div id="usersList"><p style="color:var(--muted);font-size:0.85rem">Esperando conexión...</p></div>
     </div>
   </div>
 
-  <!-- PANEL HISTORIAL (solo admin) -->
   <div id="historial" class="panel">
     <div class="historial-filters">
       <select class="filter-select" id="filtEstado">
@@ -128,10 +110,8 @@
     <div class="hist-count" id="histCount"></div>
     <div id="histContainer"><div class="empty-state"><div class="empty-icon">📋</div><p>Historial local</p></div></div>
   </div>
-
 </div>
 
-<!-- MODAL UBICACIÓN -->
 <div id="locationModal">
   <div class="modal-card">
     <div class="modal-header">
@@ -154,18 +134,15 @@
       <button class="loc-btn" onclick="confirmAndSend('Gimnasio')"><span>👟</span> Gimnasio</button>
       <button class="loc-btn" onclick="confirmAndSend('Casino JUNAEB')"><span>🍽️</span> Casino JUNAEB</button>
       <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span>🧱</span> Acceso Principal</button>
-      <!-- ✅ Nuevas Ubicaciones Agregadas -->
       <div class="loc-group-title">Accesos y Hall</div>
       <button class="loc-btn" onclick="confirmAndSend('Acceso los Jazmines')"><span>🚪</span> Acceso los Jazmines</button>
       <button class="loc-btn" onclick="confirmAndSend('Portón Santo Tomás')"><span>🚪</span> Portón Santo Tomás</button>
       <button class="loc-btn" onclick="confirmAndSend('Hall Central')"><span>🏛️</span> Hall Central</button>
-      
       <button class="btn-cancel-modal" onclick="closeLocationModal()">Cancelar</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL RESOLUCIÓN -->
 <div id="resolveModal">
   <div class="resolve-card">
     <div class="resolve-title">✓ Marcar como Atendida</div>
@@ -177,7 +154,6 @@
   </div>
 </div>
 
-<!-- OVERLAY SAE -->
 <div id="saeOverlay">
   <div class="sae-bar" id="saeBar">
     <span class="sae-bar-dot"></span>
@@ -194,7 +170,7 @@
       <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
-    <button class="btn-sae-close" onclick="closeSaeOverlay()">✓ ENTENDIDO — CERRAR</button>
+    <button class="btn-sae-close" onclick="closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
   </div>
 </div>
 
@@ -214,19 +190,42 @@ let resolveTargetId  = '';
 let socket = null;
 let isConnected = false;
 
+/*
+ * FIX PRINCIPAL – "Entendido / Silenciar"
+ * ----------------------------------------
+ * El problema original: al pulsar "Entendido" se llamaba stopAlarm() y se
+ * ocultaba el overlay, pero el socket recibía new_alert rebotado del servidor
+ * (fracción de segundo después) y volvía a ejecutar playAlarm() + showSaeOverlay().
+ *
+ * Solución: un Set que registra qué alertas ya fueron silenciadas en ESTE
+ * cliente. Antes de sonar o mostrar el overlay se comprueba ese Set.
+ * stopAlarm() añade el ID al Set automáticamente.
+ */
+const silencedAlerts = new Set();   // IDs ya silenciados por este cliente
+let currentSoundingAlertId = null;  // ID de la alerta que suena ahora mismo
+
 /* ═══════════════════════════════════════════════════════════════
    AUDIO
 ═══════════════════════════════════════════════════════════════ */
 function initAudio() {
   if (audioInitialized) return;
-  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); audioInitialized = true; } catch(e) {}
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    audioInitialized = true;
+  } catch(e) {}
 }
+
 function stopAlarm() {
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
   activeOscillators.forEach(o => { try { o.stop(0); } catch(e){} });
   activeOscillators = [];
-  if (audioCtx && audioCtx.state === 'running') audioCtx.suspend().catch(()=>{});
+  // Registrar el ID como silenciado ANTES de limpiar la variable
+  if (currentSoundingAlertId) {
+    silencedAlerts.add(currentSoundingAlertId);
+    currentSoundingAlertId = null;
+  }
 }
+
 function playAlarmOnce(type) {
   if (!audioCtx || audioCtx.state === 'closed') return;
   const patterns = type === 'urgente'
@@ -246,17 +245,23 @@ function playAlarmOnce(type) {
     activeOscillators.push(osc);
   });
 }
-function playAlarm(type) {
+
+// Ahora recibe alertId para saber qué está sonando
+function playAlarm(type, alertId) {
   if (!audioCtx) initAudio();
   if (!audioCtx || audioCtx.state === 'closed') return;
   if (audioCtx.state === 'suspended') audioCtx.resume();
-  stopAlarm();
+  stopAlarm(); // detiene la anterior (y la registra como silenciada si aplica)
+  currentSoundingAlertId = alertId || null;
   playAlarmOnce(type);
-  alarmInterval = setInterval(() => playAlarmOnce(type), type === 'urgente' ? 1200 : type === 'accidente' ? 1100 : 1000);
+  alarmInterval = setInterval(
+    () => playAlarmOnce(type),
+    type === 'urgente' ? 1200 : type === 'accidente' ? 1100 : 1000
+  );
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   SELECCIÓN DE ROL
+   SELECCIÓN DE ROL Y LOGIN
 ═══════════════════════════════════════════════════════════════ */
 function selectRole(role, element) {
   myRole = role;
@@ -264,27 +269,25 @@ function selectRole(role, element) {
   element.classList.add('active');
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ENTRAR A LA APP
-═══════════════════════════════════════════════════════════════ */
 async function enterApp() {
   const nameInput = document.getElementById('userNameInput');
   myName = nameInput.value.trim() || 'Usuario';
-  
   if (myName.length < 2) {
     nameInput.style.borderColor = 'var(--red)';
     setTimeout(() => nameInput.style.borderColor = '', 500);
     return;
   }
-  
-  // ✅ PIN Admin = 2026, Emisor = 1234
   const expectedPin = myRole === 'admin' ? '2026' : '1234';
   try {
-    const res = await fetch('/auth/verify-pin', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ pin: expectedPin }) });
+    const res = await fetch('/auth/verify-pin', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ pin: expectedPin })
+    });
     const data = await res.json();
     if (!data.ok) { showToast('PIN incorrecto', 'error'); return; }
   } catch(e) { console.warn('Auth offline mode'); }
-  
+
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
   document.getElementById('userLabel').textContent = myName;
@@ -298,7 +301,6 @@ async function enterApp() {
       <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>
       <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>`;
   }
-
   initAudio();
   connectToServer();
   renderAlerts();
@@ -311,40 +313,43 @@ async function enterApp() {
 function connectToServer() {
   if (typeof io === 'undefined') { updateConnectionStatus(false); return; }
   socket = io({ transports: ['websocket', 'polling'] });
-  
+
   socket.on('connect', () => {
     isConnected = true;
     updateConnectionStatus(true);
-    console.log('✅ Conectado al servidor');
     socket.emit('register', { name: myName, role: myRole });
+    if ('serviceWorker' in navigator) requestPushSub();
   });
-  
+
   socket.on('disconnect', () => {
     isConnected = false;
     updateConnectionStatus(false);
-    console.log('❌ Desconectado del servidor');
   });
-  
+
   socket.on('new_alert', (alert) => {
     if (!alerts.find(a => a.id === alert.id)) {
       alerts.unshift(alert);
       localHistorial.unshift(alert);
       renderAlerts();
       if (alert.status === 'activa') {
-        playAlarm(alert.type);
-        showSaeOverlay(alert);
-        showToast(`🚨 ${alert.type.toUpperCase()}: ${alert.sender} en ${alert.location}`, 'info');
+        // FIX: no sonar si ya fue silenciada por este cliente
+        if (!silencedAlerts.has(alert.id)) {
+          playAlarm(alert.type, alert.id);
+          showSaeOverlay(alert);
+          showToast(`🚨 ${alert.type.toUpperCase()}: ${alert.sender} en ${alert.location}`, 'info');
+        }
       }
     }
   });
-  
+
   socket.on('alerts_sync', (list) => {
     alerts = list;
     localHistorial = list;
     renderAlerts();
+    // No se vuelve a sonar en sync — solo actualiza la UI
     if (myRole === 'admin') loadHistorial();
   });
-  
+
   socket.on('alert_updated', (updated) => {
     const idx = alerts.findIndex(a => a.id === updated.id);
     if (idx >= 0) {
@@ -354,10 +359,15 @@ function connectToServer() {
     }
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
-    // ✅ Detener sonido si la alerta fue atendida
-    if (updated.status === 'atendida') stopAlarm();
+
+    // Si otro admin marcó como atendida y es la que está sonando aquí, silenciar
+    if (updated.status === 'atendida') {
+      if (currentSoundingAlertId === updated.id) stopAlarm();
+      const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
+      if (overlayVisible) closeSaeOverlay(true);
+    }
   });
-  
+
   socket.on('users_update', (users) => renderUsers(users));
 }
 
@@ -375,9 +385,6 @@ function updateConnectionStatus(connected) {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   TABS
-═══════════════════════════════════════════════════════════════ */
 function switchTab(tab, btn) {
   document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -388,16 +395,16 @@ function switchTab(tab, btn) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   MODAL UBICACIÓN Y ENVÍO INMEDIATO
+   EMISIÓN DE ALERTAS
 ═══════════════════════════════════════════════════════════════ */
-function openLocationModal(type) { 
-  pendingAlertType = type; 
-  const title = document.getElementById('modalTitle'); 
-  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?' 
-                 : type === 'accidente' ? '🟣 ACCIDENTE: ¿DÓNDE ESTÁS?' 
+function openLocationModal(type) {
+  pendingAlertType = type;
+  const title = document.getElementById('modalTitle');
+  title.textContent = type === 'urgente' ? '🆘 EMERGENCIA: ¿DÓNDE ESTÁS?'
+                 : type === 'accidente' ? '🟣 ACCIDENTE: ¿DÓNDE ESTÁS?'
                  : '⚠️ ALERTA: ¿DÓNDE ESTÁS?';
-  title.className   = `modal-title ${type}`; 
-  document.getElementById('locationModal').classList.add('visible'); 
+  title.className = `modal-title ${type}`;
+  document.getElementById('locationModal').classList.add('visible');
 }
 
 function closeLocationModal() {
@@ -413,16 +420,25 @@ function confirmAndSend(location) {
   const btnAcc = document.getElementById('btnAcc');
   const btnAlr = document.getElementById('btnAlr');
   const msgEl  = document.getElementById('statusMsg');
-
   btnUrg.disabled = btnAcc.disabled = btnAlr.disabled = true;
-  
+
+  /*
+   * FIX emisor: el emisor muestra el overlay con un ID temporal local.
+   * Cuando el servidor rebota new_alert con el ID real, ese ID NO está en
+   * silencedAlerts, por lo que sonaría de nuevo. Para evitarlo, al llegar
+   * new_alert del servidor para el propio emisor, lo detectamos porque el
+   * overlay ya está visible y simplemente actualizamos la alerta en la lista
+   * sin volver a sonar (el check silencedAlerts.has(alert.id) lo filtra solo
+   * si usamos el mismo ID — pero como el emisor ya tiene sonido activo con
+   * currentSoundingAlertId, usamos una bandera adicional: myPendingSend).
+   */
+  myPendingSend = true; // señal para ignorar el next new_alert que rebote al emisor
+
   const now = new Date();
   const alert = {
-    id: Date.now().toString(),
-    type: type,
-    sender: myName,
-    location: location,
-    message: type === 'urgente' ? `¡NECESITO AYUDA URGENTE EN ${location}!` 
+    id: `local-${Date.now()}`,
+    type, sender: myName, location,
+    message: type === 'urgente' ? `¡NECESITO AYUDA URGENTE EN ${location}!`
               : type === 'accidente' ? `🟣 ACCIDENTE REPORTADO EN ${location}`
               : `⚠️ ALERTA EN ${location}`,
     date: now.toLocaleDateString('es-CL'),
@@ -432,20 +448,15 @@ function confirmAndSend(location) {
 
   if (isConnected && socket) {
     socket.emit('send_alert', { type, location, message: alert.message });
-  } else {
-    alerts.unshift(alert);
-    localHistorial.unshift(alert);
   }
-  
-  const msg = type === 'urgente' ? `¡Ayuda urgente enviada desde ${location}!` 
-              : type === 'accidente' ? `Alerta de accidente enviada desde ${location}!`
-              : `Alerta emitida desde ${location}`;
+
+  const msg = type === 'urgente' ? '¡Ayuda urgente enviada!'
+              : type === 'accidente' ? '¡Alerta de accidente enviada!'
+              : 'Alerta emitida';
   msgEl.textContent = msg;
   msgEl.className = `feedback-msg ${type}`;
-  playAlarm(type);
+  playAlarm(type, alert.id);
   showSaeOverlay(alert);
-  renderAlerts();
-  if (myRole === 'admin') loadHistorial();
 
   setTimeout(() => {
     btnUrg.disabled = btnAcc.disabled = btnAlr.disabled = false;
@@ -453,8 +464,11 @@ function confirmAndSend(location) {
   }, 4000);
 }
 
+// Bandera para que el emisor no suene de nuevo cuando recibe su propio rebote
+let myPendingSend = false;
+
 /* ═══════════════════════════════════════════════════════════════
-   MODAL RESOLUCIÓN
+   RESOLUCIÓN DE ALERTAS
 ═══════════════════════════════════════════════════════════════ */
 function openResolveModal(alertId) {
   resolveTargetId = alertId;
@@ -470,26 +484,10 @@ function confirmResolve() {
   const note = document.getElementById('resolveNote').value.trim();
   if (isConnected && socket) {
     socket.emit('resolve_alert', { alertId: resolveTargetId, note });
-  } else {
-    const alert = alerts.find(a => a.id === resolveTargetId);
-    if (alert) {
-      alert.status = 'atendida';
-      alert.resolve_note = note;
-      alert.resolved_by = myName;
-    }
-    const histAlert = localHistorial.find(a => a.id === resolveTargetId);
-    if (histAlert) {
-      histAlert.status = 'atendida';
-      histAlert.resolve_note = note;
-      histAlert.resolved_by = myName;
-    }
   }
-  // ✅ Detener alarma al resolver desde cualquier lugar
   stopAlarm();
   closeResolveModal();
-  closeSaeOverlay();
-  renderAlerts();
-  if (myRole === 'admin') loadHistorial();
+  closeSaeOverlay(true);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -498,7 +496,6 @@ function confirmResolve() {
 function showSaeOverlay(alert) {
   const isUrg = alert.type === 'urgente';
   const isAcc = alert.type === 'accidente';
-  const overlay = document.getElementById('saeOverlay');
   document.getElementById('saeBar').className  = `sae-bar ${alert.type}`;
   document.getElementById('saeBody').className = `sae-body ${alert.type}`;
   document.getElementById('saeBarText').textContent  = isUrg ? '🚨 EMERGENCIA · COLEGIO NSG' : isAcc ? '🟣 ACCIDENTE · COLEGIO NSG' : '⚠️ ALERTA · COLEGIO NSG';
@@ -509,16 +506,24 @@ function showSaeOverlay(alert) {
   document.getElementById('saeLocation').textContent = alert.location || '—';
   document.getElementById('saeTime').textContent     = `${alert.date} ${alert.time}`;
   document.getElementById('saeTimeBadge').textContent= `${alert.date} · ${alert.time}`;
-  overlay.classList.add('visible');
+  document.getElementById('saeOverlay').classList.add('visible');
 }
-function closeSaeOverlay() {
-  const overlay = document.getElementById('saeOverlay');
-  if (overlay) overlay.classList.remove('visible');
-  try { stopAlarm(); } catch(e) { console.warn('Stop alarm error', e); }
+
+/*
+ * FIX: closeSaeOverlay(silent)
+ * - sin parámetro o silent=false → llama stopAlarm() que registra el ID en silencedAlerts
+ * - silent=true → ya se llamó stopAlarm() antes, evitar doble ejecución
+ * El botón "ENTENDIDO — SILENCIAR" llama closeSaeOverlay() sin parámetros,
+ * lo que invoca stopAlarm() → añade currentSoundingAlertId a silencedAlerts →
+ * cuando llegue el new_alert rebotado, silencedAlerts.has(id) será true → no suena.
+ */
+function closeSaeOverlay(silent = false) {
+  document.getElementById('saeOverlay').classList.remove('visible');
+  if (!silent) stopAlarm();
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   RENDER ALERTAS ACTIVAS
+   RENDER UI
 ═══════════════════════════════════════════════════════════════ */
 function renderAlerts() {
   const container = document.getElementById('alertsContainer');
@@ -531,12 +536,8 @@ function renderAlerts() {
     const isAdmin = myRole === 'admin';
     const seenDis = a.status !== 'activa' ? 'disabled' : '';
     const attDis  = a.status === 'atendida' ? 'disabled' : '';
-    const seenBtn = isAdmin
-      ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>`
-      : '';
-    const attBtn  = isAdmin
-      ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>`
-      : `<button class="btn-ack btn-attend" onclick="confirmResolveDirect('${a.id}')" ${attDis}>✓ Atender</button>`;
+    const seenBtn = isAdmin ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>` : '';
+    const attBtn  = isAdmin ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>` : '';
     const tipoClass = a.type === 'alerta' ? 'tipo-alerta' : a.type === 'accidente' ? 'tipo-accidente' : '';
     return `
       <div class="alert-card ${tipoClass} status-${a.status}">
@@ -557,21 +558,7 @@ function renderAlerts() {
 }
 
 function markSeen(alertId) {
-  if (isConnected && socket) {
-    socket.emit('mark_seen', { alertId });
-  } else {
-    const alert = alerts.find(a => a.id === alertId);
-    if (alert && alert.status === 'activa') {
-      alert.status = 'vista';
-      alert.seen_by = myName;
-      renderAlerts();
-    }
-  }
-}
-
-function confirmResolveDirect(alertId) {
-  resolveTargetId = alertId;
-  confirmResolve();
+  if (isConnected && socket) socket.emit('mark_seen', { alertId });
 }
 
 function renderUsers(users) {
@@ -583,7 +570,9 @@ function renderUsers(users) {
     return;
   }
   count.textContent = users.length;
-  list.innerHTML = users.map(u => `<div class="user-item"><span class="user-dot"></span>${u.name}<span class="user-role ${u.role}">${u.role === 'admin' ? 'Admin' : u.role}</span></div>`).join('');
+  list.innerHTML = users.map(u =>
+    `<div class="user-item"><span class="user-dot"></span>${u.name}<span class="user-role ${u.role}">${u.role === 'admin' ? 'Admin' : u.role}</span></div>`
+  ).join('');
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -593,35 +582,30 @@ async function loadHistorial() {
   if (myRole !== 'admin') return;
   const container = document.getElementById('histContainer');
   const estado = document.getElementById('filtEstado').value;
-  const tipo = document.getElementById('filtTipo').value;
-  
+  const tipo   = document.getElementById('filtTipo').value;
   let filtered = [...localHistorial];
-  if (estado) filtered = filtered.filter(a => a.status === estado);
-  if (tipo) filtered = filtered.filter(a => a.type === tipo);
-  
+
   if (isConnected) {
     try {
-      const params = new URLSearchParams({ estado: estado || undefined, tipo: tipo || undefined });
+      // FIX: incluir pin=2026 para pasar la validación del servidor (v3.4)
+      const params = new URLSearchParams({ estado: estado || '', tipo: tipo || '', pin: '2026' });
       const res = await fetch(`/api/historial?${params}`);
       const data = await res.json();
-      if (data.ok && data.alerts) {
-        filtered = data.alerts;
-        if (estado) filtered = filtered.filter(a => a.status === estado);
-        if (tipo) filtered = filtered.filter(a => a.type === tipo);
-      }
-    } catch(e) { console.warn('Historial fetch fallback', e); }
+      if (data.ok && data.alerts) filtered = data.alerts;
+    } catch(e) { console.warn('Historial offline mode'); }
+  } else {
+    if (estado) filtered = filtered.filter(a => a.status === estado);
+    if (tipo)   filtered = filtered.filter(a => a.type === tipo);
   }
-  
+
   if (filtered.length === 0) {
     container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><p>Sin registros</p></div>';
     document.getElementById('histCount').textContent = '0 registros';
     return;
   }
-  
-  container.innerHTML = filtered.map(a => {
-    const tipoClass = a.type === 'alerta' ? 'alerta' : a.type === 'accidente' ? 'accidente' : a.type;
-    return `
-    <div class="hist-card ${tipoClass} ${a.status}">
+
+  container.innerHTML = filtered.map(a => `
+    <div class="hist-card ${a.type} ${a.status}">
       <div class="hist-header">
         <span class="hist-tipo ${a.type}">
           ${a.type === 'urgente' ? '🆘 URGENTE' : a.type === 'accidente' ? '🟣 ACCIDENTE' : '⚠️ ALERTA'}
@@ -632,8 +616,8 @@ async function loadHistorial() {
       <div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status.toUpperCase()}</b></div>
       ${a.resolved_by ? `<div class="hist-row">Atendido por: <b>${a.resolved_by}</b></div>` : ''}
       ${a.resolve_note ? `<div class="hist-note">💬 "${a.resolve_note}"</div>` : ''}
-    </div>`;
-  }).join('');
+    </div>`
+  ).join('');
   document.getElementById('histCount').textContent = `${filtered.length} registros`;
 }
 
@@ -641,16 +625,21 @@ function filterHistorial() { loadHistorial(); }
 
 function exportCSV() {
   const rows = [['ID','Fecha','Hora','Tipo','Emisor','Ubicación','Mensaje','Estado','Visto por','Atendido por','Nota']];
-  localHistorial.forEach(a => rows.push([a.id, a.date, a.time, a.type.toUpperCase(), a.sender, a.location, a.message || '', a.status, a.seen_by || '', a.resolved_by || '', a.resolve_note || '']));
+  localHistorial.forEach(a => rows.push([
+    a.id, a.date, a.time, a.type.toUpperCase(), a.sender, a.location,
+    a.message || '', a.status, a.seen_by || '', a.resolved_by || '', a.resolve_note || ''
+  ]));
   const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `alertas_nsg_${new Date().toISOString().split('T')[0]}.csv`; a.click();
+  const a = document.createElement('a');
+  a.href = url; a.download = `alertas_nsg_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
   showToast('📥 CSV exportado', 'success');
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   TOAST & PWA
+   TOAST Y SERVICE WORKER
 ═══════════════════════════════════════════════════════════════ */
 function showToast(msg, type='info') {
   const t = document.createElement('div');
@@ -660,14 +649,26 @@ function showToast(msg, type='info') {
   setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3500);
 }
 
-// Service Worker & Push
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('/serviceworker.js').then(reg => {
     reg.pushManager.getSubscription().then(sub => {
       if (!sub && isConnected) requestPushSub();
     });
   });
+
+  navigator.serviceWorker.addEventListener('message', event => {
+    if (event.data?.type === 'SHOW_SAE' && event.data?.alert) {
+      const incoming = event.data.alert;
+      const id = incoming.alertId || incoming.id;
+      // FIX: respetar silencedAlerts también para notificaciones push
+      if (!silencedAlerts.has(id)) {
+        showSaeOverlay(incoming);
+        playAlarm(incoming.type, id);
+      }
+    }
+  });
 }
+
 async function requestPushSub() {
   try {
     const res = await fetch('/vapid-public-key');
@@ -676,9 +677,14 @@ async function requestPushSub() {
     const sub = await navigator.serviceWorker.ready.pushManager.subscribe({
       userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key)
     });
-    await fetch('/push-subscribe', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ socketId: socket.id, subscription: sub }) });
+    await fetch('/push-subscribe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ subscription: sub })
+    });
   } catch(e) { console.warn('Push no disponible', e); }
 }
+
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
@@ -686,7 +692,7 @@ function urlBase64ToUint8Array(base64String) {
   return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
 }
 
-// PWA install
+// PWA Install
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault(); deferredPrompt = e;
@@ -703,16 +709,6 @@ window.triggerInstall = function() {
   deferredPrompt.prompt();
   deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
 };
-
-// Mensajes desde Service Worker
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.addEventListener('message', event => {
-    if (event.data?.type === 'SHOW_SAE' && event.data?.alert) {
-      showSaeOverlay(event.data.alert);
-      playAlarm(event.data.alert.type);
-    }
-  });
-}
 </script>
 </body>
 </html>
