@@ -398,6 +398,23 @@ body {
 .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
 .btn-sae-close:active { background: rgba(255,255,255,0.5); transform: scale(0.97); }
 
+
+/* ── BOTÓN LOGOUT ─────────────────────────────────────────── */
+.btn-logout {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  width: 32px; height: 32px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+.btn-logout:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.1); }
+
 /* ── KEYFRAMES ────────────────────────────────────────────── */
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
