@@ -1,18 +1,18 @@
+# Dependencias
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.env
-.env.local
-.DS_Store
-*.log
-# Variables de entorno y credenciales
-.env
 
-# Base de datos local SQLite
+# Base de datos local (no subir a GitHub — Railway la crea en runtime)
 alerts.db
 alerts.db-shm
 alerts.db-wal
 
-# Dependencias de Node
-node_modules/
+# Variables de entorno (NUNCA subir al repo)
+.env
+
+# Logs
+*.log
+npm-debug.log*
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
