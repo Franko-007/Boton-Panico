@@ -35,7 +35,7 @@
           <div class="role-option admin" onclick="selectRole('admin', this)">🟣 Admin</div>
         </div>
       </div>
-      <button class="btn-enter" onclick="enterApp()">INGRESAR AL SISTEMA</button>
+      <button class="btn-enter" onclick="initAudio(); enterApp()">INGRESAR AL SISTEMA</button>
     </div>
   </div>
 </div>
@@ -154,7 +154,7 @@
   </div>
 </div>
 
-<div id="saeOverlay">
+<div id="saeOverlay" onclick="initAudio()">
   <div class="sae-bar" id="saeBar">
     <span class="sae-bar-dot"></span>
     <span id="saeBarText">ALERTA DE EMERGENCIA — COLEGIO NSG</span>
@@ -170,7 +170,7 @@
       <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
-    <button class="btn-sae-close" onclick="closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
+    <button class="btn-sae-close" onclick="initAudio(); closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
   </div>
 </div>
 
@@ -206,19 +206,42 @@ let currentSoundingAlertId = null;  // ID de la alerta que suena ahora mismo
 
 /* ═══════════════════════════════════════════════════════════════
    AUDIO
+   FIX MÓVIL: Los navegadores móviles bloquean AudioContext hasta
+   que el usuario toca la pantalla. Solución:
+   1. initAudio() se llama en CADA interacción del usuario (login,
+      botones, toque del overlay).
+   2. Si audioCtx está suspendido al llegar una alerta, se guarda
+      el tipo pendiente y se reanuda al primer toque.
+   3. El botón ENTENDIDO llama initAudio() antes de stopAlarm()
+      para garantizar que el contexto esté activo y se detenga.
 ═══════════════════════════════════════════════════════════════ */
+let pendingAlarmType = null; // tipo de alarma pendiente si audioCtx estaba suspendido
+
 function initAudio() {
-  if (audioInitialized) return;
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    audioInitialized = true;
-  } catch(e) {}
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioInitialized = true;
+    } catch(e) { return; }
+  }
+  // Reanudar si está suspendido (crítico en móvil)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().then(() => {
+      // Si había una alarma pendiente por contexto suspendido, reproducirla ahora
+      if (pendingAlarmType) {
+        const t = pendingAlarmType;
+        pendingAlarmType = null;
+        _startAlarmLoop(t);
+      }
+    });
+  }
 }
 
 function stopAlarm() {
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
   activeOscillators.forEach(o => { try { o.stop(0); } catch(e){} });
   activeOscillators = [];
+  pendingAlarmType = null;
   // Registrar el ID como silenciado ANTES de limpiar la variable
   if (currentSoundingAlertId) {
     silencedAlerts.add(currentSoundingAlertId);
@@ -227,7 +250,7 @@ function stopAlarm() {
 }
 
 function playAlarmOnce(type) {
-  if (!audioCtx || audioCtx.state === 'closed') return;
+  if (!audioCtx || audioCtx.state !== 'running') return;
   const patterns = type === 'urgente'
     ? [[880,0],[440,0.15],[880,0.3],[440,0.45],[880,0.6],[440,0.75]]
     : type === 'accidente'
@@ -246,18 +269,37 @@ function playAlarmOnce(type) {
   });
 }
 
-// Ahora recibe alertId para saber qué está sonando
-function playAlarm(type, alertId) {
-  if (!audioCtx) initAudio();
-  if (!audioCtx || audioCtx.state === 'closed') return;
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  stopAlarm(); // detiene la anterior (y la registra como silenciada si aplica)
-  currentSoundingAlertId = alertId || null;
+function _startAlarmLoop(type) {
   playAlarmOnce(type);
   alarmInterval = setInterval(
     () => playAlarmOnce(type),
     type === 'urgente' ? 1200 : type === 'accidente' ? 1100 : 1000
   );
+}
+
+function playAlarm(type, alertId) {
+  stopAlarm(); // detiene anterior y registra su ID en silencedAlerts
+  currentSoundingAlertId = alertId || null;
+
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioInitialized = true;
+    } catch(e) { return; }
+  }
+
+  if (audioCtx.state === 'running') {
+    _startAlarmLoop(type);
+  } else if (audioCtx.state === 'suspended') {
+    // Guardar tipo pendiente — sonará cuando el usuario toque la pantalla
+    pendingAlarmType = type;
+    audioCtx.resume().then(() => {
+      if (pendingAlarmType === type) {
+        pendingAlarmType = null;
+        _startAlarmLoop(type);
+      }
+    });
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -519,7 +561,12 @@ function showSaeOverlay(alert) {
  */
 function closeSaeOverlay(silent = false) {
   document.getElementById('saeOverlay').classList.remove('visible');
-  if (!silent) stopAlarm();
+  if (!silent) {
+    // FIX MÓVIL: initAudio() primero para reanudar contexto suspendido,
+    // luego stopAlarm() para detener y registrar en silencedAlerts
+    initAudio();
+    stopAlarm();
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════
