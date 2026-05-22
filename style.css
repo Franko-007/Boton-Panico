@@ -22,6 +22,7 @@ body {
   display: flex; flex-direction: column;
 }
 
+/* ── PANTALLA DE BIENVENIDA ──────────────────── */
 #welcomeScreen {
   position: fixed; inset: 0; background: var(--bg); z-index: 2000;
   display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px;
@@ -66,10 +67,12 @@ body {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;
   cursor: pointer; transition: background 0.2s, transform 0.1s; margin-top: 8px;
+  touch-action: manipulation;
 }
 .btn-enter:hover { background: #1d4ed8; }
 .btn-enter:active { transform: scale(0.98); }
 
+/* ── APP PRINCIPAL ────────────────────────────────────────── */
 #appMain { display: none; max-width: 580px; margin: 0 auto; padding: 16px; flex: 1; width: 100%; }
 .topbar {
   display: flex; align-items: center; justify-content: space-between;
@@ -84,6 +87,7 @@ body {
 .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse-dot 2s infinite; }
 .conn-dot.off { background: var(--red); animation: none; }
 
+/* ── TABS ─────────────────────────────────────────────────── */
 .tabs { display: grid; gap: 6px; margin-bottom: 14px; }
 .tabs.emisor-tabs    { grid-template-columns: 1fr 1fr; }
 .tabs.admin-tabs     { grid-template-columns: 1fr 1fr 1fr; }
@@ -93,13 +97,16 @@ body {
   font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.92rem; font-weight: 700; letter-spacing: 0.5px;
   border-radius: 10px; cursor: pointer; transition: all 0.2s;
+  touch-action: manipulation;
 }
 .tab:hover { border-color: var(--blue-lite); color: var(--text); }
 .tab.active { background: var(--blue); border-color: var(--blue); color: white; }
 
+/* ── PANELES ──────────────────────────────────────────────── */
 .panel { display: none; }
 .panel.active { display: block; }
 
+/* ── EMISOR ───────────────────────────────────────────────── */
 .btn-grid { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 16px 0 24px; }
 .panic-btn {
   border-radius: 50%; border: none; color: white;
@@ -107,7 +114,9 @@ body {
   cursor: pointer; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
   line-height: 1.25; transition: transform 0.12s, box-shadow 0.2s;
-  user-select: none; -webkit-user-select: none; position: relative; overflow: hidden;
+  user-select: none; -webkit-user-select: none;
+  position: relative; overflow: hidden;
+  touch-action: manipulation;
 }
 .panic-btn:active { transform: scale(0.95); }
 .panic-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -143,6 +152,7 @@ body {
 .feedback-msg.alerta  { color: var(--amber); animation: flash 0.8s infinite; }
 .feedback-msg.accidente { color: var(--purple); animation: flash 0.8s infinite; }
 
+/* ── MODAL UBICACIÓN ──────────────────────────────────────── */
 #locationModal {
   position: fixed; inset: 0; z-index: 5000;
   background: rgba(5,7,14,0.95);
@@ -161,7 +171,7 @@ body {
 .modal-title.urgente { color: var(--red); }
 .modal-title.alerta  { color: var(--amber); }
 .modal-title.accidente { color: var(--purple); }
-.modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px; }
+.modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--muted); font-size: 1.2rem; cursor: pointer; padding: 4px; touch-action: manipulation; }
 .modal-close:hover { color: var(--text); }
 .modal-body { padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
 .loc-group-title {
@@ -173,7 +183,7 @@ body {
   border: 1.5px solid var(--border); border-radius: 12px;
   color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.97rem;
   font-weight: 600; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px;
-  transition: all 0.15s ease;
+  transition: all 0.15s ease; touch-action: manipulation;
 }
 .loc-btn:hover { border-color: var(--blue-lite); background: #161f33; }
 .loc-btn:active { transform: scale(0.98); }
@@ -181,10 +191,11 @@ body {
   width: 100%; padding: 14px; background: transparent; border: 2px solid var(--border);
   border-radius: 12px; color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.1rem; font-weight: 700; cursor: pointer; margin-top: 12px;
-  transition: all 0.2s;
+  transition: all 0.2s; touch-action: manipulation;
 }
 .btn-cancel-modal:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.08); }
 
+/* ── MODAL RESOLUCIÓN ─────────────────────────────────────── */
 #resolveModal {
   position: fixed; inset: 0; z-index: 6000;
   background: rgba(5,7,14,0.96);
@@ -209,16 +220,18 @@ body {
   flex: 1; padding: 13px; background: var(--green); color: white; border: none;
   border-radius: 10px; font-family: 'Barlow Condensed', sans-serif;
   font-size: 1.05rem; font-weight: 800; cursor: pointer; transition: background 0.2s;
+  touch-action: manipulation;
 }
 .btn-resolve-confirm:hover { background: #059669; }
 .btn-resolve-cancel {
   padding: 13px 18px; background: transparent; color: var(--muted);
   border: 1.5px solid var(--border); border-radius: 10px;
   font-family: 'Barlow Condensed', sans-serif; font-size: 1.05rem; font-weight: 700;
-  cursor: pointer;
+  cursor: pointer; touch-action: manipulation;
 }
 .btn-resolve-cancel:hover { border-color: var(--text); color: var(--text); }
 
+/* ── PANEL RECEPTOR ───────────────────────────────────────── */
 .section-title {
   font-family: 'Barlow Condensed', sans-serif; font-size: 0.82rem; font-weight: 700;
   letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px;
@@ -252,6 +265,7 @@ body {
   padding: 8px 14px; border: none; border-radius: 8px;
   font-family: 'Barlow Condensed', sans-serif; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px;
   cursor: pointer; transition: background 0.2s; white-space: nowrap;
+  touch-action: manipulation;
 }
 .btn-seen    { background: var(--blue); color: white; }
 .btn-seen:hover { background: #1d4ed8; }
@@ -261,6 +275,7 @@ body {
 .empty-state { text-align: center; padding: 36px 20px; color: var(--muted); }
 .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 10px; }
 
+/* ── PANEL HISTORIAL ──────────────────────────────────────── */
 .historial-filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
 .filter-select {
   padding: 7px 10px; background: var(--surface); border: 1.5px solid var(--border);
@@ -271,18 +286,17 @@ body {
 .btn-filter {
   padding: 7px 14px; background: var(--blue); color: white; border: none;
   border-radius: 8px; font-family: 'Barlow Condensed', sans-serif;
-  font-size: 0.9rem; font-weight: 700; cursor: pointer;
+  font-size: 0.9rem; font-weight: 700; cursor: pointer; touch-action: manipulation;
 }
 .hist-count { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
 .hist-card {
   background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--muted);
-  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
-  font-size: 0.85rem;
+  border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 0.85rem;
 }
 .hist-card.urgente { border-left-color: var(--red); }
 .hist-card.alerta  { border-left-color: var(--amber); }
 .hist-card.accidente { border-left-color: var(--purple); }
-.hist-card.atendida{ border-left-color: var(--green); }
+.hist-card.atendida { border-left-color: var(--green); }
 .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
 .hist-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; }
 .hist-tipo.urgente { color: var(--red); }
@@ -293,6 +307,7 @@ body {
 .hist-row b { color: var(--text); font-weight: 600; }
 .hist-note { color: #86efac; font-style: italic; margin-top: 4px; }
 
+/* ── USUARIOS ─────────────────────────────────────────────── */
 .users-box {
   background: var(--surface); border: 1px solid var(--border);
   border-radius: 12px; padding: 16px; margin-top: 18px;
@@ -303,6 +318,7 @@ body {
 .user-role { font-size: 0.72rem; color: var(--muted); margin-left: auto; }
 .user-role.admin { color: #a78bfa; }
 
+/* ── OVERLAY SAE ──────────────────────────────────────────── */
 #saeOverlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0;
   width: 100%; height: 100%; z-index: 9999;
@@ -310,18 +326,22 @@ body {
   overflow: hidden; opacity: 0; pointer-events: none; transition: opacity 0.25s ease-out;
 }
 #saeOverlay.visible { opacity: 1; pointer-events: auto; }
+
+/* FIX CRÍTICO: sae-bar y sae-stripes no deben interceptar toques */
 .sae-bar {
   padding: 10px 18px; display: flex; align-items: center; gap: 10px;
   font-family: 'Barlow Condensed', sans-serif; font-size: 0.85rem; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase;
+  pointer-events: none; /* No interceptar toques */
 }
 .sae-bar.urgente { background: #1a0202; color: #fca5a5; border-bottom: 2px solid #ef4444; }
 .sae-bar.alerta  { background: #1a1000; color: #fde68a; border-bottom: 2px solid #f59e0b; }
 .sae-bar.accidente { background: #1a0a2e; color: #d8b4fe; border-bottom: 2px solid var(--purple); }
-.sae-bar-dot { width: 10px; height: 10px; border-radius: 50%; animation: flash 0.5s infinite; }
+.sae-bar-dot { width: 10px; height: 10px; border-radius: 50%; animation: flash 0.5s infinite; pointer-events: none; }
 .urgente .sae-bar-dot { background: var(--red); }
 .alerta  .sae-bar-dot { background: var(--amber); }
 .accidente .sae-bar-dot { background: var(--purple); }
+
 .sae-body {
   flex: 1; display: flex; flex-direction: column;
   align-items: center; justify-content: center;
@@ -332,34 +352,53 @@ body {
 .sae-body.urgente { background: rgba(127,29,29,0.97); }
 .sae-body.alerta  { background: rgba(120,53,15,0.97); }
 .sae-body.accidente { background: rgba(76,29,149,0.97); }
-.sae-stripes { position: absolute; inset: 0; opacity: 0.06;
-  background: repeating-linear-gradient(-45deg,#fff 0px,#fff 10px,transparent 10px,transparent 20px); }
-.sae-icon { font-size: clamp(3rem,10vw,5rem); margin-bottom: 12px; animation: shake 0.5s infinite; }
-.sae-level { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px; }
-.sae-message { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.4rem,5.5vw,3rem); font-weight: 900; letter-spacing: 1px; line-height: 1.2; margin-bottom: 18px; text-transform: uppercase; padding: 0 12px; word-break: break-word; }
-.sae-detail { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; width: 100%; max-width: 380px; }
+
+/* FIX CRÍTICO: sae-stripes cubre todo el overlay — debe tener pointer-events:none */
+.sae-stripes {
+  position: absolute; inset: 0; opacity: 0.06;
+  background: repeating-linear-gradient(-45deg,#fff 0px,#fff 10px,transparent 10px,transparent 20px);
+  pointer-events: none; /* NO interceptar toques — el botón queda debajo */
+}
+
+.sae-icon { font-size: clamp(3rem,10vw,5rem); margin-bottom: 12px; animation: shake 0.5s infinite; pointer-events: none; }
+.sae-level { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px; pointer-events: none; }
+.sae-message { font-family: 'Barlow Condensed', sans-serif; font-size: clamp(1.4rem,5.5vw,3rem); font-weight: 900; letter-spacing: 1px; line-height: 1.2; margin-bottom: 18px; text-transform: uppercase; padding: 0 12px; word-break: break-word; pointer-events: none; }
+.sae-detail { background: rgba(0,0,0,0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; width: 100%; max-width: 380px; pointer-events: none; }
 .sae-detail .sae-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.95rem; }
 .sae-detail .sae-row:last-child { border-bottom: none; }
 .sae-detail .sae-row .sae-lbl { opacity: 0.7; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; }
 .sae-detail .sae-row .sae-val { font-weight: 700; }
 .sae-detail .sae-row .sae-val.loc { color: #fbbf24; font-size: 1.05rem; }
+.sae-time-badge {
+  position: absolute; top: 14px; right: 18px;
+  background: rgba(0,0,0,0.4); border-radius: 8px; padding: 6px 12px;
+  font-size: 0.8rem; opacity: 0.85;
+  font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
+  pointer-events: none; /* No interceptar toques */
+}
+
+/* FIX CRÍTICO: botón ENTENDIDO debe ser el único elemento clickeable del overlay */
 .btn-sae-close {
   background: rgba(255,255,255,0.2); color: white;
   border: 2px solid rgba(255,255,255,0.5); border-radius: 14px;
   padding: 18px 0; width: 100%; max-width: 340px;
   font-family: 'Barlow Condensed', sans-serif; font-size: 1.25rem; font-weight: 800; letter-spacing: 1.5px;
   cursor: pointer; transition: background 0.2s;
-  -webkit-tap-highlight-color: transparent; touch-action: manipulation; flex-shrink: 0;
+  /* Garantizar que el botón sea siempre clickeable */
+  position: relative;
+  z-index: 10001;
+  pointer-events: auto !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  /* Sin user-select para evitar selección de texto en móvil */
+  user-select: none;
+  -webkit-user-select: none;
 }
 .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
-.btn-sae-close:active { background: rgba(255,255,255,0.4); transform: scale(0.97); }
-.sae-time-badge {
-  position: absolute; top: 14px; right: 18px;
-  background: rgba(0,0,0,0.4); border-radius: 8px; padding: 6px 12px;
-  font-size: 0.8rem; opacity: 0.85;
-  font-family: 'Barlow Condensed', sans-serif; letter-spacing: 1px;
-}
+.btn-sae-close:active { background: rgba(255,255,255,0.5); transform: scale(0.97); }
 
+/* ── KEYFRAMES ────────────────────────────────────────────── */
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
 @keyframes shake     { 0%,100%{transform:rotate(0deg)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
@@ -371,7 +410,5 @@ body {
   .btn-alerta  { width: 155px; height: 155px; font-size: 0.95rem; }
   .btn-accidente { width: 175px; height: 175px; font-size: 1rem; }
   .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
-}
-@media (max-width: 480px) {
   .btn-sae-close { margin-bottom: 20px; }
 }
