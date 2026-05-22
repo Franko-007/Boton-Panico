@@ -1,6 +1,6 @@
 {
   "name": "panic-button-escolar",
-  "version": "3.0.0",
+  "version": "3.4.0",
   "description": "Sistema de botón de pánico para colegios con WebSockets y Web Push",
   "main": "server.js",
   "scripts": {
