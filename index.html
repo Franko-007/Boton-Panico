@@ -154,14 +154,14 @@
   </div>
 </div>
 
-<div id="saeOverlay" onclick="initAudio()">
+<div id="saeOverlay">
   <div class="sae-bar" id="saeBar">
     <span class="sae-bar-dot"></span>
     <span id="saeBarText">ALERTA DE EMERGENCIA — COLEGIO NSG</span>
   </div>
   <div class="sae-body" id="saeBody">
-    <div class="sae-stripes"></div>
-    <div class="sae-time-badge" id="saeTimeBadge"></div>
+    <div class="sae-stripes" style="pointer-events:none;"></div>
+    <div class="sae-time-badge" id="saeTimeBadge" style="pointer-events:none;"></div>
     <div class="sae-icon" id="saeIcon">🆘</div>
     <div class="sae-level" id="saeLevel">EMERGENCIA · NIVEL ROJO</div>
     <div class="sae-message" id="saeMessage">¡NECESITO AYUDA URGENTE!</div>
@@ -170,7 +170,7 @@
       <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
-    <button class="btn-sae-close" onclick="initAudio(); closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
+    <button class="btn-sae-close" id="btnSaeClose" style="position:relative;z-index:10001;pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); closeSaeOverlay()" ontouchstart="event.preventDefault(); initAudio(); closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
   </div>
 </div>
 
