@@ -1,6 +1,6 @@
 {
   "name": "panic-button-escolar",
-  "version": "3.5.0",
+  "version": "3.6.0",
   "description": "Sistema de botón de pánico para colegios con WebSockets y Web Push",
   "main": "server.js",
   "scripts": {
@@ -8,11 +8,7 @@
     "dev": "node server.js",
     "generate-vapid": "node -e \"const wp=require('web-push'); const k=wp.generateVAPIDKeys(); console.log('VAPID_PUBLIC='+k.publicKey+'\\nVAPID_PRIVATE='+k.privateKey);\""
   },
-  "keywords": ["panic-button", "emergency", "websocket", "pwa", "school"],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "sqlite3": "^5.1.7",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
     "googleapis": "^140.0.0",
