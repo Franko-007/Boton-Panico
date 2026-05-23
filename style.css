@@ -475,6 +475,20 @@ body {
   font-weight: 700; color: var(--text); min-width: 28px; text-align: right;
 }
 
+/* ── ALERTAS ANTIGUAS SIN ATENDER ────────────────────────── */
+.alert-card.alert-old {
+  opacity: 0.6;
+  border-left-color: var(--muted) !important;
+}
+.alert-card.alert-old .alert-tipo { color: var(--muted) !important; }
+.badge-activa.old { background: rgba(75,96,128,0.2); color: var(--muted); border-color: var(--muted); }
+.old-alerts-title {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 0.78rem; font-weight: 700;
+  letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase;
+  margin: 16px 0 8px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
 /* ── KEYFRAMES ────────────────────────────────────────────── */
 @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.4} }
 @keyframes flash     { 0%,100%{opacity:1} 50%{opacity:0.35} }
