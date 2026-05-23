@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pánico NSG">
   <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -30,7 +31,7 @@
       </div>
       <div>
         <div class="field-label">Contraseña</div>
-        <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña del sistema" autocomplete="current-password">
+        <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña de acceso" autocomplete="current-password">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
@@ -283,27 +284,16 @@ async function enterApp() {
     return;
   }
 
-  // Validar contraseña del sistema
+  // Validar contraseña según rol
   const password = passInput ? passInput.value.trim() : '';
-  if (password !== 'guadalupe2026') {
+  const correctPass = myRole === 'admin' ? 'Admin2026' : 'guadalupe2026';
+  if (password !== correctPass) {
     if (loginError) loginError.style.display = 'block';
     if (passInput) { passInput.style.borderColor = 'var(--red)'; passInput.value = ''; }
     setTimeout(() => { if (passInput) passInput.style.borderColor = ''; }, 800);
     return;
   }
   if (loginError) loginError.style.display = 'none';
-
-  // Si es admin, verificar PIN
-  if (myRole === 'admin') {
-    try {
-      const res = await fetch('/auth/verify-pin', {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ pin: '2026' })
-      });
-      const data = await res.json();
-      if (!data.ok) { showToast('PIN de admin incorrecto', 'error'); return; }
-    } catch(e) { console.warn('Auth offline mode'); }
-  }
 
   document.getElementById('welcomeScreen').style.display = 'none';
   document.getElementById('appMain').style.display = 'block';
