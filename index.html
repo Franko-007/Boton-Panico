@@ -118,6 +118,21 @@
     <div class="hist-count" id="histCount"></div>
     <div id="histContainer"><div class="empty-state"><div class="empty-icon">📋</div><p>Historial local</p></div></div>
   </div>
+
+  <div id="dashboard" class="panel">
+    <div class="dash-period-row">
+      <button class="dash-period-btn active" onclick="setDashPeriod('week',this)">Esta semana</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('month',this)">Este mes</button>
+      <button class="dash-period-btn" onclick="setDashPeriod('prev',this)">Mes anterior</button>
+    </div>
+    <div class="dash-totals" id="dashTotals"></div>
+    <div class="dash-section-title">Por tipo</div>
+    <div class="dash-chart" id="dashByType"></div>
+    <div class="dash-section-title">Por ubicación</div>
+    <div class="dash-chart" id="dashByLocation"></div>
+    <div class="dash-section-title">Por hora del día</div>
+    <div class="dash-chart" id="dashByHour"></div>
+  </div>
 </div>
 
 <div id="locationModal">
@@ -307,7 +322,8 @@ async function enterApp() {
     tabsRow.innerHTML = `
       <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
       <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>
-      <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>`;
+      <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>
+      <button class="tab" onclick="switchTab('dashboard',this)">📊 DASHBOARD</button>`;
   }
   initAudio();
   connectToServer();
@@ -432,6 +448,7 @@ function switchTab(tab, btn) {
   document.getElementById(tab).classList.add('active');
   if (tab === 'receptor') renderAlerts();
   if (tab === 'historial' && myRole === 'admin') loadHistorial();
+  if (tab === 'dashboard' && myRole === 'admin') renderDashboard();
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -679,6 +696,118 @@ function exportCSV() {
   a.href = url; a.download = `alertas_nsg_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   showToast('📥 CSV exportado', 'success');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DASHBOARD
+═══════════════════════════════════════════════════════════════ */
+let dashPeriod = 'week';
+
+function setDashPeriod(period, btn) {
+  dashPeriod = period;
+  document.querySelectorAll('.dash-period-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderDashboard();
+}
+
+function getDashAlerts() {
+  const now = new Date();
+  const toISO = d => d.toISOString().split('T')[0];
+
+  let desde, hasta;
+  if (dashPeriod === 'week') {
+    // Lunes de esta semana
+    const day = now.getDay() || 7;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - day + 1);
+    desde = toISO(monday);
+    hasta = toISO(now);
+  } else if (dashPeriod === 'month') {
+    desde = toISO(new Date(now.getFullYear(), now.getMonth(), 1));
+    hasta = toISO(now);
+  } else { // prev month
+    const first = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const last  = new Date(now.getFullYear(), now.getMonth(), 0);
+    desde = toISO(first);
+    hasta = toISO(last);
+  }
+  return localHistorial.filter(a => a.date >= desde && a.date <= hasta);
+}
+
+function renderBar(container, data, colorFn) {
+  if (!container) return;
+  if (data.length === 0) { container.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;padding:8px 0">Sin datos en este período</p>'; return; }
+  const max = Math.max(...data.map(d => d.count));
+  container.innerHTML = data.map(d => {
+    const pct = max > 0 ? Math.round((d.count / max) * 100) : 0;
+    return `
+      <div class="dash-bar-row">
+        <div class="dash-bar-label">${d.label}</div>
+        <div class="dash-bar-track">
+          <div class="dash-bar-fill" style="width:${pct}%;background:${colorFn(d.label)}"></div>
+        </div>
+        <div class="dash-bar-count">${d.count}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderDashboard() {
+  const data = getDashAlerts();
+
+  // Totales
+  const totals = document.getElementById('dashTotals');
+  if (totals) {
+    const urg = data.filter(a => a.type === 'urgente').length;
+    const acc = data.filter(a => a.type === 'accidente').length;
+    const alr = data.filter(a => a.type === 'alerta').length;
+    totals.innerHTML = `
+      <div class="dash-total-card urgente"><div class="dash-total-num">${urg}</div><div class="dash-total-lbl">🆘 Urgentes</div></div>
+      <div class="dash-total-card accidente"><div class="dash-total-num">${acc}</div><div class="dash-total-lbl">🟣 Accidentes</div></div>
+      <div class="dash-total-card alerta"><div class="dash-total-num">${alr}</div><div class="dash-total-lbl">⚠️ Alertas</div></div>
+      <div class="dash-total-card total"><div class="dash-total-num">${data.length}</div><div class="dash-total-lbl">📋 Total</div></div>`;
+  }
+
+  // Por tipo
+  const typeColors = { urgente: 'var(--red)', accidente: 'var(--purple)', alerta: 'var(--amber)' };
+  const byType = ['urgente','accidente','alerta'].map(t => ({
+    label: t.charAt(0).toUpperCase() + t.slice(1),
+    count: data.filter(a => a.type === t).length,
+    _t: t
+  })).filter(d => d.count > 0);
+  renderBar(document.getElementById('dashByType'), byType, lbl => typeColors[lbl.toLowerCase()] || 'var(--blue-lite)');
+
+  // Por ubicación (top 8)
+  const locMap = {};
+  data.forEach(a => { if (a.location) locMap[a.location] = (locMap[a.location] || 0) + 1; });
+  const byLoc = Object.entries(locMap)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0, 8)
+    .map(([label, count]) => ({ label, count }));
+  renderBar(document.getElementById('dashByLocation'), byLoc, () => 'var(--blue-lite)');
+
+  // Por hora del día (franjas de 2h)
+  const hourMap = {};
+  for (let h = 0; h < 24; h += 2) hourMap[h] = 0;
+  data.forEach(a => {
+    if (!a.time) return;
+    const parts = a.time.match(/(\d+):(\d+)(?::.*)?(?:\s*(a|p)\.?m\.?)?/i);
+    if (!parts) return;
+    let hh = parseInt(parts[1]);
+    const ampm = parts[3];
+    if (ampm) {
+      if (ampm.toLowerCase() === 'p' && hh !== 12) hh += 12;
+      if (ampm.toLowerCase() === 'a' && hh === 12) hh = 0;
+    }
+    const slot = Math.floor(hh / 2) * 2;
+    hourMap[slot] = (hourMap[slot] || 0) + 1;
+  });
+  const byHour = Object.entries(hourMap)
+    .filter(([,v]) => v > 0)
+    .map(([h, count]) => ({
+      label: `${String(h).padStart(2,'0')}:00–${String(parseInt(h)+2).padStart(2,'0')}:00`,
+      count
+    }));
+  renderBar(document.getElementById('dashByHour'), byHour, () => 'var(--green)');
 }
 
 /* ═══════════════════════════════════════════════════════════════
