@@ -193,7 +193,7 @@
       <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
-    <button class="btn-sae-close" id="btnSaeClose" style="position:relative;z-index:10001;pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); closeSaeOverlay()" ontouchstart="event.preventDefault(); initAudio(); closeSaeOverlay()">✓ ENTENDIDO — SILENCIAR</button>
+    <button class="btn-sae-close" id="btnSaeClose" style="position:relative;z-index:10001;pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); resolveFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); resolveFromOverlay()">✓ ENTENDIDO — ATENDIDO</button>
   </div>
 </div>
 
@@ -571,6 +571,24 @@ function showSaeOverlay(alert) {
  * lo que invoca stopAlarm() → añade currentSoundingAlertId a silencedAlerts →
  * cuando llegue el new_alert rebotado, silencedAlerts.has(id) será true → no suena.
  */
+function resolveFromOverlay() {
+  // Cualquier usuario puede marcar como atendida desde el overlay
+  stopAlarm();
+  document.getElementById('saeOverlay').classList.remove('visible');
+  if (currentDisplayedAlertId) {
+    silencedAlerts.add(currentDisplayedAlertId);
+    // Buscar el ID real (no local-xxx) en la lista de alertas
+    const realAlert = alerts.find(a =>
+      a.id === currentDisplayedAlertId ||
+      (currentDisplayedAlertId.startsWith('local-') && a.sender === myName && a.status === 'activa')
+    );
+    if (realAlert && isConnected && socket) {
+      socket.emit('resolve_alert', { alertId: realAlert.id, note: 'Atendido desde overlay por ' + myName });
+    }
+    currentDisplayedAlertId = null;
+  }
+}
+
 function closeSaeOverlay(silent = false) {
   document.getElementById('saeOverlay').classList.remove('visible');
   // Registrar el ID del overlay como silenciado — impide que new_alert
