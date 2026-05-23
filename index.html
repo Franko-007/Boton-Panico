@@ -634,25 +634,35 @@ function closeSaeOverlay(silent = false) {
 ═══════════════════════════════════════════════════════════════ */
 function renderAlerts() {
   const container = document.getElementById('alertsContainer');
-  const active = alerts.filter(a => a.status !== 'atendida');
-  if (active.length === 0) {
+  const notAttended = alerts.filter(a => a.status !== 'atendida');
+
+  if (notAttended.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>`;
     return;
   }
-  container.innerHTML = active.map(a => {
+
+  // Separar recientes (hoy y ayer) de antiguas sin atender
+  const todayISO = new Date().toISOString().split('T')[0];
+  const yesterdayISO = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  const recent = notAttended.filter(a => a.date >= yesterdayISO);
+  const old    = notAttended.filter(a => a.date < yesterdayISO);
+
+  function alertCard(a, isOld) {
     const isAdmin = myRole === 'admin';
     const seenDis = a.status !== 'activa' ? 'disabled' : '';
     const attDis  = a.status === 'atendida' ? 'disabled' : '';
     const seenBtn = isAdmin ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>` : '';
     const attBtn  = isAdmin ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>` : '';
     const tipoClass = a.type === 'alerta' ? 'tipo-alerta' : a.type === 'accidente' ? 'tipo-accidente' : '';
+    const oldClass  = isOld ? 'alert-old' : '';
     return `
-      <div class="alert-card ${tipoClass} status-${a.status}">
+      <div class="alert-card ${tipoClass} ${oldClass} status-${a.status}">
         <div class="alert-header">
           <div class="alert-tipo ${a.type}">
             ${a.type === 'urgente' ? '🆘 URGENTE' : a.type === 'accidente' ? '🟣 ACCIDENTE' : '⚠️ ALERTA'}
           </div>
-          <span class="alert-status-badge badge-${a.status}">${a.status.toUpperCase()}</span>
+          <span class="alert-status-badge badge-${a.status}">${isOld ? 'SIN ATENDER' : a.status.toUpperCase()}</span>
         </div>
         <div class="alert-meta">
           <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
@@ -661,7 +671,20 @@ function renderAlerts() {
         </div>
         <div class="alert-actions">${seenBtn}${attBtn}</div>
       </div>`;
-  }).join('');
+  }
+
+  let html = '';
+  if (recent.length > 0) {
+    html += recent.map(a => alertCard(a, false)).join('');
+  } else {
+    html += `<div class="empty-state" style="padding:16px"><div class="empty-icon">✅</div><p>Sin alertas recientes</p></div>`;
+  }
+  if (old.length > 0) {
+    html += `<div class="old-alerts-title">⏳ Sin atender de días anteriores (${old.length})</div>`;
+    html += old.map(a => alertCard(a, true)).join('');
+  }
+
+  container.innerHTML = html;
 }
 
 function markSeen(alertId) {
