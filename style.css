@@ -405,15 +405,20 @@ body {
   border: 1.5px solid var(--border);
   color: var(--muted);
   border-radius: 8px;
-  width: 32px; height: 32px;
-  font-size: 1rem;
+  width: 34px; height: 34px;
+  min-width: 34px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-family: 'Barlow', sans-serif;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: all 0.2s;
   touch-action: manipulation;
   flex-shrink: 0;
+  line-height: 1;
 }
-.btn-logout:hover { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.1); }
+.btn-logout:hover,
+.btn-logout:active { border-color: var(--red); color: var(--red); background: rgba(239,68,68,0.15); }
 
 
 /* ── DASHBOARD ────────────────────────────────────────────── */
