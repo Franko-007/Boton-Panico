@@ -385,20 +385,40 @@ function connectToServer() {
   });
 
   socket.on('new_alert', (alert) => {
-    if (!alerts.find(a => a.id === alert.id)) {
-      alerts.unshift(alert);
-      localHistorial.unshift(alert);
-      renderAlerts();
-      if (alert.status === 'activa') {
-        if (!silencedAlerts.has(alert.id)) {
+    const existing = alerts.findIndex(a => a.id === alert.id);
+    if (existing < 0) {
+      // FIX: reemplazar cualquier alerta local del mismo emisor/ubicación/tipo
+      // que fue creada antes de recibir el rebote del servidor
+      const localIdx = alerts.findIndex(a =>
+        a.id.startsWith('local-') &&
+        a.sender === alert.sender &&
+        a.type === alert.type &&
+        a.location === alert.location
+      );
+      if (localIdx >= 0) {
+        // Actualizar el ID local al ID real del servidor
+        const oldLocalId = alerts[localIdx].id;
+        alerts[localIdx] = alert;
+        localHistorial[localIdx] = alert;
+        // Actualizar silencedAlerts: si el local estaba silenciado, silenciar el real también
+        if (silencedAlerts.has(oldLocalId)) {
+          silencedAlerts.add(alert.id);
+          silencedAlerts.delete(oldLocalId);
+        }
+        // Actualizar currentSoundingAlertId si aplica
+        if (currentSoundingAlertId === oldLocalId) currentSoundingAlertId = alert.id;
+        if (currentDisplayedAlertId === oldLocalId) currentDisplayedAlertId = alert.id;
+      } else {
+        alerts.unshift(alert);
+        localHistorial.unshift(alert);
+        if (alert.status === 'activa' && !silencedAlerts.has(alert.id)) {
           playAlarm(alert.type, alert.id);
           showSaeOverlay(alert);
           showToast('🚨 ' + alert.type.toUpperCase() + ': ' + alert.sender + ' en ' + alert.location, 'info');
         }
       }
-    } else {
-      renderAlerts();
     }
+    renderAlerts();
   });
 
   socket.on('alerts_sync', (list) => {
@@ -414,13 +434,22 @@ function connectToServer() {
       alerts[idx] = updated;
       const hIdx = localHistorial.findIndex(a => a.id === updated.id);
       if (hIdx >= 0) localHistorial[hIdx] = updated;
+    } else {
+      // Si no estaba en la lista local, agregarla (puede pasar en emisores)
+      alerts.unshift(updated);
+      localHistorial.unshift(updated);
     }
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
     if (updated.status === 'atendida') {
-      if (currentSoundingAlertId === updated.id) stopAlarm();
+      // Detener sonido si es la alerta activa
+      if (currentSoundingAlertId === updated.id || currentSoundingAlertId) stopAlarm();
+      // Cerrar overlay si está visible mostrando esta alerta
       const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
-      if (overlayVisible) closeSaeOverlay(true);
+      if (overlayVisible) {
+        silencedAlerts.add(updated.id);
+        closeSaeOverlay(true);
+      }
     }
   });
 
