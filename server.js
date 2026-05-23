@@ -387,7 +387,7 @@ io.on('connection', (socket) => {
 
   socket.on('resolve_alert', ({ alertId, note }) => {
     const user = users.get(socket.id);
-    if (!user || user.role !== 'admin') return;
+    if (!user) return; // cualquier rol puede resolver desde el overlay
 
     const alert = alertsMemory.find(a => a.id === alertId);
     if (!alert || alert.status === 'atendida') return;
