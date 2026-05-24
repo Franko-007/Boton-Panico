@@ -254,12 +254,14 @@ body {
 }
 .badge-activa  { background: rgba(239,68,68,0.2);  color: var(--red);       border: 1px solid var(--red); }
 .badge-vista   { background: rgba(59,130,246,0.2); color: var(--blue-lite); border: 1px solid var(--blue-lite); }
-.badge-atendida{ background: rgba(16,185,129,0.2); color: var(--green);     border: 1px solid var(--green); }
+.badge-atendida    { background: rgba(16,185,129,0.2); color: var(--green);     border: 1px solid var(--green); }
+.badge-falsa_alarma { background: rgba(75,96,128,0.2);  color: var(--muted);     border: 1px solid var(--muted); }
 .alert-meta { display: flex; flex-direction: column; gap: 2px; margin-bottom: 10px; }
 .alert-row { display: flex; align-items: flex-start; gap: 6px; font-size: 0.85rem; }
 .alert-row .lbl { color: var(--muted); min-width: 72px; }
 .alert-row .val { font-weight: 600; }
 .alert-row .loc-val { color: var(--blue-lite); font-weight: 700; }
+.alert-row .timer-val { color: var(--amber); font-weight: 700; font-size: 0.82rem; }
 .alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .btn-ack {
   padding: 8px 14px; border: none; border-radius: 8px;
@@ -268,6 +270,8 @@ body {
   touch-action: manipulation;
 }
 .btn-seen    { background: var(--blue); color: white; }
+.btn-false   { background: rgba(75,96,128,0.3); color: var(--muted); border: 1px solid var(--border); }
+.btn-false:hover { background: rgba(75,96,128,0.5); color: var(--text); }
 .btn-seen:hover { background: #1d4ed8; }
 .btn-attend  { background: var(--green); color: white; }
 .btn-attend:hover { background: #059669; }
@@ -398,6 +402,15 @@ body {
 .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
 .btn-sae-close:active { background: rgba(255,255,255,0.5); transform: scale(0.97); }
 
+
+/* ── BOTÓN TURNO ──────────────────────────────────────────── */
+.btn-duty {
+  background: transparent; border: 1.5px solid var(--border);
+  border-radius: 8px; width: 34px; height: 34px; min-width: 34px;
+  font-size: 0.9rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; touch-action: manipulation; flex-shrink: 0;
+}
 
 /* ── BOTÓN LOGOUT ─────────────────────────────────────────── */
 .btn-logout {
