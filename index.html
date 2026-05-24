@@ -56,6 +56,7 @@
         <div class="topbar-role" id="roleLabel"></div>
       </div>
       <span class="conn-dot off" id="connStatus" title="Modo offline"></span>
+      <button class="btn-duty" id="btnDuty" onclick="toggleDuty()" title="Estoy de turno" style="display:none">🟢</button>
       <button class="btn-logout" onclick="logoutApp()" title="Cerrar sesión">✕</button>
     </div>
   </div>
@@ -93,7 +94,9 @@
       <div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>
     </div>
     <div class="users-box">
-      <div class="section-title">👥 Conectados — <span id="userCount">0</span> (offline)</div>
+      <div class="section-title">🟢 De turno ahora</div>
+      <div id="dutySection"><p style="color:var(--muted);font-size:0.82rem">Nadie de turno ahora</p></div>
+      <div class="section-title" style="margin-top:14px">👥 Conectados — <span id="userCount">0</span> (offline)</div>
       <div id="usersList"><p style="color:var(--muted);font-size:0.85rem">Esperando conexión...</p></div>
     </div>
   </div>
@@ -289,8 +292,8 @@ function selectRole(role, element) {
 }
 
 async function enterApp() {
-  const nameInput = document.getElementById('userNameInput');
-  const passInput = document.getElementById('userPasswordInput');
+  const nameInput  = document.getElementById('userNameInput');
+  const passInput  = document.getElementById('userPasswordInput');
   const loginError = document.getElementById('loginError');
   myName = nameInput.value.trim() || 'Usuario';
 
@@ -300,13 +303,23 @@ async function enterApp() {
     return;
   }
 
-  // Validar contraseña según rol
+  // Validar contraseña en el SERVIDOR (no en el cliente)
   const password = passInput ? passInput.value.trim() : '';
-  const correctPass = myRole === 'admin' ? 'Admin2026' : 'guadalupe2026';
-  if (password !== correctPass) {
-    if (loginError) loginError.style.display = 'block';
-    if (passInput) { passInput.style.borderColor = 'var(--red)'; passInput.value = ''; }
-    setTimeout(() => { if (passInput) passInput.style.borderColor = ''; }, 800);
+  try {
+    const res  = await fetch('/auth/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name: myName, password, role: myRole })
+    });
+    const data = await res.json();
+    if (!data.ok) {
+      if (loginError) loginError.style.display = 'block';
+      if (passInput)  { passInput.style.borderColor = 'var(--red)'; passInput.value = ''; }
+      setTimeout(() => { if (passInput) passInput.style.borderColor = ''; }, 800);
+      showToast(data.error || 'Contraseña incorrecta', 'error');
+      return;
+    }
+  } catch(e) {
+    showToast('Error de conexión al validar', 'error');
     return;
   }
   if (loginError) loginError.style.display = 'none';
@@ -315,6 +328,8 @@ async function enterApp() {
   document.getElementById('appMain').style.display = 'block';
   document.getElementById('userLabel').textContent = myName;
   document.getElementById('roleLabel').textContent = myRole === 'admin' ? '🟣 Admin' : '🔵 Emisor';
+  const btnDuty = document.getElementById('btnDuty');
+  if (btnDuty) btnDuty.style.display = myRole === 'admin' ? 'flex' : 'none';
 
   const tabsRow = document.getElementById('tabsRow');
   if (myRole === 'admin') {
@@ -398,6 +413,7 @@ function connectToServer() {
       if (localIdx >= 0) {
         // Actualizar el ID local al ID real del servidor
         const oldLocalId = alerts[localIdx].id;
+        alert._receivedAt = alerts[localIdx]._receivedAt || Date.now();
         alerts[localIdx] = alert;
         localHistorial[localIdx] = alert;
         // Actualizar silencedAlerts: si el local estaba silenciado, silenciar el real también
@@ -409,12 +425,17 @@ function connectToServer() {
         if (currentSoundingAlertId === oldLocalId) currentSoundingAlertId = alert.id;
         if (currentDisplayedAlertId === oldLocalId) currentDisplayedAlertId = alert.id;
       } else {
+        alert._receivedAt = Date.now();
         alerts.unshift(alert);
         localHistorial.unshift(alert);
         if (alert.status === 'activa' && !silencedAlerts.has(alert.id)) {
           playAlarm(alert.type, alert.id);
           showSaeOverlay(alert);
           showToast('🚨 ' + alert.type.toUpperCase() + ': ' + alert.sender + ' en ' + alert.location, 'info');
+          // Vibración en móvil
+          if (navigator.vibrate) {
+            navigator.vibrate(alert.type === 'urgente' ? [400,150,400,150,600] : alert.type === 'accidente' ? [300,100,300,100,400] : [300,100,300]);
+          }
         }
       }
     }
@@ -442,18 +463,52 @@ function connectToServer() {
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
     if (updated.status === 'atendida') {
-      // Detener sonido si es la alerta activa
       if (currentSoundingAlertId === updated.id || currentSoundingAlertId) stopAlarm();
-      // Cerrar overlay si está visible mostrando esta alerta
       const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
       if (overlayVisible) {
         silencedAlerts.add(updated.id);
         closeSaeOverlay(true);
       }
+      // Notificar a todos quién atendió
+      if (updated.resolved_by) {
+        showToast('✅ Atendido por ' + updated.resolved_by, 'success');
+      }
     }
   });
 
   socket.on('users_update', (users) => renderUsers(users));
+
+  socket.on('duty_update', (dutyList) => {
+    renderDuty(dutyList);
+  });
+}
+
+function toggleDuty() {
+  if (isConnected && socket) socket.emit('toggle_duty');
+}
+
+function renderDuty(dutyList) {
+  const btn = document.getElementById('btnDuty');
+  if (!btn) return;
+  const amOnDuty = dutyList.some(d => d.name === myName);
+  btn.textContent = amOnDuty ? '🔴' : '🟢';
+  btn.title = amOnDuty ? 'Salir de turno' : 'Estoy de turno';
+  btn.style.background = amOnDuty ? 'rgba(239,68,68,0.15)' : 'transparent';
+  btn.style.borderColor = amOnDuty ? 'var(--red)' : 'var(--border)';
+
+  // Mostrar quién está de turno en panel de usuarios
+  const dutySection = document.getElementById('dutySection');
+  if (dutySection) {
+    if (dutyList.length === 0) {
+      dutySection.innerHTML = '<p style="color:var(--muted);font-size:0.82rem">Nadie de turno ahora</p>';
+    } else {
+      dutySection.innerHTML = dutyList.map(d =>
+        '<div class="user-item"><span style="width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;display:inline-block"></span> ' +
+        d.name + ' <span style="font-size:0.72rem;color:var(--green);margin-left:auto">DE TURNO desde ' + d.since + '</span></div>'
+      ).join('');
+    }
+  }
+}
 }
 
 function updateConnectionStatus(connected) {
@@ -654,8 +709,9 @@ function renderAlerts() {
     const isAdmin = myRole === 'admin';
     const seenDis = a.status !== 'activa' ? 'disabled' : '';
     const attDis  = a.status === 'atendida' ? 'disabled' : '';
-    const seenBtn = isAdmin ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>` : '';
-    const attBtn  = isAdmin ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>` : '';
+    const seenBtn  = isAdmin ? `<button class="btn-ack btn-seen" onclick="markSeen('${a.id}')" ${seenDis}>👁 Visto</button>` : '';
+    const attBtn   = isAdmin ? `<button class="btn-ack btn-attend" onclick="openResolveModal('${a.id}')" ${attDis}>✓ Atendida</button>` : '';
+    const falseBtn = isAdmin && a.status === 'activa' ? `<button class="btn-ack btn-false" onclick="markFalseAlarm('${a.id}')">🚫 Falsa</button>` : '';
     const tipoClass = a.type === 'alerta' ? 'tipo-alerta' : a.type === 'accidente' ? 'tipo-accidente' : '';
     const oldClass  = isOld ? 'alert-old' : '';
     return `
@@ -670,8 +726,9 @@ function renderAlerts() {
           <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
           <div class="alert-row"><span class="lbl">Ubicación</span><span class="val loc-val">${a.location || '—'}</span></div>
           <div class="alert-row"><span class="lbl">Hora</span><span class="val">${a.date} ${(a.time||'').slice(0,5)}</span></div>
+          ${a.status === 'activa' && a._receivedAt ? '<div class="alert-row"><span class="lbl">Activa hace</span><span class="val timer-val" data-since="'+a._receivedAt+'">calculando...</span></div>' : ''}
         </div>
-        <div class="alert-actions">${seenBtn}${attBtn}</div>
+        <div class="alert-actions">${seenBtn}${attBtn}${falseBtn||''}</div>
       </div>`;
   }
 
@@ -691,6 +748,11 @@ function renderAlerts() {
 
 function markSeen(alertId) {
   if (isConnected && socket) socket.emit('mark_seen', { alertId });
+}
+
+function markFalseAlarm(alertId) {
+  if (isConnected && socket) socket.emit('false_alarm', { alertId });
+  showToast('🚫 Marcada como falsa alarma', 'info');
 }
 
 function renderUsers(users) {
@@ -948,6 +1010,24 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = window.atob(base64);
   return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
 }
+
+// Actualizar contadores de tiempo cada 30 segundos
+function updateTimers() {
+  const now = Date.now();
+  document.querySelectorAll('.timer-val[data-since]').forEach(el => {
+    const since = parseInt(el.dataset.since);
+    const mins = Math.floor((now - since) / 60000);
+    if (mins < 1) el.textContent = 'menos de 1 min';
+    else if (mins === 1) el.textContent = '1 minuto';
+    else if (mins < 60) el.textContent = mins + ' minutos';
+    else {
+      const hrs = Math.floor(mins / 60);
+      const rem = mins % 60;
+      el.textContent = hrs + 'h ' + (rem > 0 ? rem + 'min' : '');
+    }
+  });
+}
+setInterval(updateTimers, 30000);
 
 // PWA Install
 let deferredPrompt = null;
