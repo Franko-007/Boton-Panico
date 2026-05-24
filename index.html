@@ -303,25 +303,37 @@ async function enterApp() {
     return;
   }
 
-  // Validar contraseña en el SERVIDOR (no en el cliente)
+  // Validar contraseña en el SERVIDOR
   const password = passInput ? passInput.value.trim() : '';
+  const btnEnter = document.querySelector('.btn-enter');
+  if (btnEnter) { btnEnter.disabled = true; btnEnter.textContent = 'VERIFICANDO...'; }
+
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000); // 15s timeout
     const res  = await fetch('/auth/login', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name: myName, password, role: myRole })
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ name: myName, password, role: myRole }),
+      signal: controller.signal
     });
+    clearTimeout(timeout);
     const data = await res.json();
     if (!data.ok) {
       if (loginError) loginError.style.display = 'block';
       if (passInput)  { passInput.style.borderColor = 'var(--red)'; passInput.value = ''; }
       setTimeout(() => { if (passInput) passInput.style.borderColor = ''; }, 800);
-      showToast(data.error || 'Contraseña incorrecta', 'error');
+      if (btnEnter) { btnEnter.disabled = false; btnEnter.textContent = 'INGRESAR AL SISTEMA'; }
+      // Mostrar error sin depender de showToast
+      if (loginError) { loginError.textContent = data.error || 'Contraseña incorrecta'; loginError.style.display = 'block'; }
       return;
     }
   } catch(e) {
-    showToast('Error de conexión al validar', 'error');
+    if (btnEnter) { btnEnter.disabled = false; btnEnter.textContent = 'INGRESAR AL SISTEMA'; }
+    if (loginError) { loginError.textContent = e.name === 'AbortError' ? 'Tiempo de espera agotado. Intenta de nuevo.' : 'Error de conexión. Intenta de nuevo.'; loginError.style.display = 'block'; }
     return;
   }
+  if (btnEnter) { btnEnter.disabled = false; btnEnter.textContent = 'INGRESAR AL SISTEMA'; }
   if (loginError) loginError.style.display = 'none';
 
   document.getElementById('welcomeScreen').style.display = 'none';
