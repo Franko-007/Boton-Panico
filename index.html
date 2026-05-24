@@ -352,6 +352,9 @@ async function enterApp() {
       <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>
       <button class="tab" onclick="switchTab('dashboard',this)">📊 DASHBOARD</button>`;
   }
+  // Guardar sesión para sobrevivir recargas
+  try { localStorage.setItem('nsg_session', JSON.stringify({ name: myName, role: myRole })); } catch(e) {}
+
   initAudio();
   connectToServer();
   renderAlerts();
@@ -386,6 +389,9 @@ function logoutApp() {
   tabsRow.innerHTML = `
     <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
     <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>`;
+
+  // Borrar sesión guardada
+  try { localStorage.removeItem('nsg_session'); } catch(e) {}
 
   // Volver al login
   document.getElementById('appMain').style.display = 'none';
@@ -455,35 +461,47 @@ function connectToServer() {
   });
 
   socket.on('alerts_sync', (list) => {
+    // Reemplazar completamente con la lista del servidor
+    // Esto elimina cualquier alerta local con id 'local-xxx' que haya quedado desactualizada
     alerts = list;
-    localHistorial = list;
+    localHistorial = [...list];
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
   });
 
   socket.on('alert_updated', (updated) => {
-    const idx = alerts.findIndex(a => a.id === updated.id);
+    // Buscar por ID exacto
+    let idx = alerts.findIndex(a => a.id === updated.id);
+    // Si no encuentra, buscar alerta local que corresponda (mismo emisor/tipo/ubicación)
+    if (idx < 0) {
+      idx = alerts.findIndex(a =>
+        a.id.startsWith('local-') &&
+        a.sender === updated.sender &&
+        a.type === updated.type &&
+        a.location === updated.location
+      );
+    }
     if (idx >= 0) {
-      alerts[idx] = updated;
-      const hIdx = localHistorial.findIndex(a => a.id === updated.id);
+      alerts[idx] = { ...updated, _receivedAt: alerts[idx]._receivedAt };
+      const hIdx = localHistorial.findIndex(a => a.id === updated.id || a.id === alerts[idx]?.id);
       if (hIdx >= 0) localHistorial[hIdx] = updated;
+      else localHistorial.unshift(updated);
     } else {
-      // Si no estaba en la lista local, agregarla (puede pasar en emisores)
       alerts.unshift(updated);
       localHistorial.unshift(updated);
     }
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
-    if (updated.status === 'atendida') {
-      if (currentSoundingAlertId === updated.id || currentSoundingAlertId) stopAlarm();
+    if (updated.status === 'atendida' || updated.status === 'falsa_alarma') {
+      if (currentSoundingAlertId) stopAlarm();
       const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
       if (overlayVisible) {
         silencedAlerts.add(updated.id);
         closeSaeOverlay(true);
       }
-      // Notificar a todos quién atendió
       if (updated.resolved_by) {
-        showToast('✅ Atendido por ' + updated.resolved_by, 'success');
+        const emoji = updated.status === 'falsa_alarma' ? '🚫' : '✅';
+        showToast(emoji + ' ' + (updated.status === 'falsa_alarma' ? 'Falsa alarma' : 'Atendido') + ' por ' + updated.resolved_by, 'success');
       }
     }
   });
@@ -1021,6 +1039,43 @@ function urlBase64ToUint8Array(base64String) {
   const rawData = window.atob(base64);
   return new Uint8Array([...rawData].map(char => char.charCodeAt(0)));
 }
+
+// Auto-login si hay sesión guardada
+(function() {
+  try {
+    const saved = localStorage.getItem('nsg_session');
+    if (!saved) return;
+    const session = JSON.parse(saved);
+    if (!session.name || !session.role) return;
+    myName = session.name;
+    myRole = session.role;
+
+    // Restaurar UI sin pedir contraseña de nuevo
+    document.getElementById('welcomeScreen').style.display = 'none';
+    document.getElementById('appMain').style.display = 'block';
+    document.getElementById('userLabel').textContent = myName;
+    document.getElementById('roleLabel').textContent = myRole === 'admin' ? '🟣 Admin' : '🔵 Emisor';
+
+    const btnDuty = document.getElementById('btnDuty');
+    if (btnDuty) btnDuty.style.display = myRole === 'admin' ? 'flex' : 'none';
+
+    const tabsRow = document.getElementById('tabsRow');
+    if (myRole === 'admin') {
+      tabsRow.className = 'tabs admin-tabs';
+      tabsRow.innerHTML = `
+        <button class="tab active" onclick="switchTab('emisor',this)">📡 EMITIR</button>
+        <button class="tab" onclick="switchTab('receptor',this)">📥 ALERTAS</button>
+        <button class="tab" onclick="switchTab('historial',this)">📋 HISTORIAL</button>
+        <button class="tab" onclick="switchTab('dashboard',this)">📊 DASHBOARD</button>`;
+    }
+    initAudio();
+    connectToServer();
+    renderAlerts();
+    if (myRole === 'admin') loadHistorial();
+  } catch(e) {
+    localStorage.removeItem('nsg_session');
+  }
+})();
 
 // Actualizar contadores de tiempo cada 30 segundos
 function updateTimers() {
