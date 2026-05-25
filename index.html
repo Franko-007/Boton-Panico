@@ -28,7 +28,18 @@
     <div class="welcome-card">
       <div>
         <div class="field-label">Tu nombre</div>
-        <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off" onclick="this.focus()" inputmode="text">
+        <input type="text" id="userNameInput" class="field-input"
+          placeholder="Ej: Prof. Franco"
+          maxlength="30"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="words"
+          spellcheck="false"
+          inputmode="text"
+          ontouchstart="this.focus(); this.click();"
+          onclick="this.focus();"
+          onfocus="this.removeAttribute('readonly');"
+          readonly>
       </div>
       <div>
         <div class="field-label">Contraseña</div>
