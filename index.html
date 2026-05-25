@@ -28,11 +28,11 @@
     <div class="welcome-card">
       <div>
         <div class="field-label">Tu nombre</div>
-        <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off">
+        <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" maxlength="30" autocomplete="off" onclick="this.focus()" inputmode="text">
       </div>
       <div>
         <div class="field-label">Contraseña</div>
-        <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña de acceso" autocomplete="current-password">
+        <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña de acceso" autocomplete="current-password" onclick="this.focus()" inputmode="text">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
@@ -145,6 +145,11 @@
       <div class="modal-title" id="modalTitle">¿DÓNDE TE ENCUENTRAS?</div>
     </div>
     <div class="modal-body">
+      <div class="loc-group-title">Accesos y Hall</div>
+      <button class="loc-btn" onclick="confirmAndSend('Acceso los Jazmines')"><span>🚪</span> Acceso los Jazmines</button>
+      <button class="loc-btn" onclick="confirmAndSend('Portón Santo Tomás')"><span>🚪</span> Portón Santo Tomás</button>
+      <button class="loc-btn" onclick="confirmAndSend('Hall Central')"><span>🏛️</span> Hall Central</button>
+      <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span>🧱</span> Acceso Principal</button>
       <div class="loc-group-title">Patios y Canchas</div>
       <button class="loc-btn" onclick="confirmAndSend('Patio Central')"><span>🌳</span> Patio Central</button>
       <button class="loc-btn" onclick="confirmAndSend('Quillay')"><span>🌿</span> Quillay</button>
@@ -159,11 +164,6 @@
       <div class="loc-group-title">Instalaciones</div>
       <button class="loc-btn" onclick="confirmAndSend('Gimnasio')"><span>👟</span> Gimnasio</button>
       <button class="loc-btn" onclick="confirmAndSend('Casino JUNAEB')"><span>🍽️</span> Casino JUNAEB</button>
-      <button class="loc-btn" onclick="confirmAndSend('Acceso Principal')"><span>🧱</span> Acceso Principal</button>
-      <div class="loc-group-title">Accesos y Hall</div>
-      <button class="loc-btn" onclick="confirmAndSend('Acceso los Jazmines')"><span>🚪</span> Acceso los Jazmines</button>
-      <button class="loc-btn" onclick="confirmAndSend('Portón Santo Tomás')"><span>🚪</span> Portón Santo Tomás</button>
-      <button class="loc-btn" onclick="confirmAndSend('Hall Central')"><span>🏛️</span> Hall Central</button>
       <button class="btn-cancel-modal" onclick="closeLocationModal()">Cancelar</button>
     </div>
   </div>
@@ -454,6 +454,10 @@ function connectToServer() {
           if (navigator.vibrate) {
             navigator.vibrate(alert.type === 'urgente' ? [400,150,400,150,600] : alert.type === 'accidente' ? [300,100,300,100,400] : [300,100,300]);
           }
+          // Popup en pestaña separada si el documento no está visible
+          if (document.hidden || document.visibilityState === 'hidden') {
+            showAlertPopup(alert);
+          }
         }
       }
     }
@@ -686,6 +690,117 @@ function showSaeOverlay(alert) {
  * lo que invoca stopAlarm() → añade currentSoundingAlertId a silencedAlerts →
  * cuando llegue el new_alert rebotado, silencedAlerts.has(id) será true → no suena.
  */
+/* ═══════════════════════════════════════════════════════════════
+   POPUP DE ALERTA EN PESTAÑA SEPARADA
+   Se abre automáticamente cuando el usuario está en otra pestaña
+═══════════════════════════════════════════════════════════════ */
+let alertPopupWin = null;
+
+function showAlertPopup(alert) {
+  // Cerrar popup anterior si existe
+  if (alertPopupWin && !alertPopupWin.closed) {
+    alertPopupWin.close();
+  }
+
+  const colors = {
+    urgente:   { bg: '#7f1d1d', border: '#ef4444', text: '#fca5a5' },
+    accidente: { bg: '#4c1d95', border: '#8b5cf6', text: '#d8b4fe' },
+    alerta:    { bg: '#78350f', border: '#f59e0b', text: '#fde68a' }
+  };
+  const c = colors[alert.type] || colors.alerta;
+  const icons = { urgente: '🆘', accidente: '🟣', alerta: '⚠️' };
+  const levels = { urgente: 'EMERGENCIA · NIVEL ROJO', accidente: 'ACCIDENTE · NIVEL MORADO', alerta: 'ALERTA · NIVEL NARANJA' };
+
+  const w = 480, h = 520;
+  const left = Math.round((screen.width - w) / 2);
+  const top  = Math.round((screen.height - h) / 2);
+
+  alertPopupWin = window.open('', 'AlertaNSG',
+    `width=${w},height=${h},top=${top},left=${left},resizable=no,scrollbars=no,toolbar=no,menubar=no,location=no,status=no`
+  );
+
+  if (!alertPopupWin) {
+    // Si el navegador bloqueó el popup, mostrar notificación nativa
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('🚨 Alerta NSG — ' + alert.type.toUpperCase(), {
+        body: alert.sender + ' en ' + alert.location,
+        icon: '/favicon.png',
+        requireInteraction: true
+      });
+    }
+    return;
+  }
+
+  alertPopupWin.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🚨 ALERTA NSG</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Barlow Condensed', sans-serif;
+    background: ${c.bg};
+    color: white;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    min-height: 100vh; text-align: center; padding: 24px;
+    background-image: repeating-linear-gradient(-45deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 10px, transparent 10px, transparent 20px);
+  }
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&display=swap');
+  .icon { font-size: 4rem; margin-bottom: 12px; animation: shake 0.5s infinite; }
+  .level { font-size: 0.85rem; letter-spacing: 4px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px; }
+  .msg { font-size: 1.8rem; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 20px; line-height: 1.2; }
+  .detail { background: rgba(0,0,0,0.35); border-radius: 12px; padding: 14px 20px; width: 100%; margin-bottom: 20px; }
+  .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 0.95rem; }
+  .row:last-child { border-bottom: none; }
+  .lbl { opacity: 0.7; font-size: 0.78rem; letter-spacing: 1px; text-transform: uppercase; }
+  .val { font-weight: 700; }
+  .loc { color: ${c.text}; }
+  .btn {
+    background: rgba(255,255,255,0.2); color: white;
+    border: 2px solid rgba(255,255,255,0.5); border-radius: 14px;
+    padding: 16px 0; width: 100%;
+    font-family: inherit; font-size: 1.1rem; font-weight: 800; letter-spacing: 1.5px;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .btn:hover { background: rgba(255,255,255,0.35); }
+  .bar { position: fixed; top: 0; left: 0; right: 0; padding: 8px 16px;
+    background: rgba(0,0,0,0.4); border-bottom: 2px solid ${c.border};
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 2px; color: ${c.text};
+    display: flex; align-items: center; gap: 8px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: ${c.border}; animation: flash 0.5s infinite; }
+  @keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
+  @keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+<div class="bar"><span class="dot"></span>${alert.type.toUpperCase()} · COLEGIO NSG</div>
+<div style="margin-top:40px">
+  <div class="icon">${icons[alert.type]}</div>
+  <div class="level">${levels[alert.type]}</div>
+  <div class="msg">${alert.message}</div>
+  <div class="detail">
+    <div class="row"><span class="lbl">Emisor</span><span class="val">${alert.sender}</span></div>
+    <div class="row"><span class="lbl">Ubicación</span><span class="val loc">${alert.location}</span></div>
+    <div class="row"><span class="lbl">Hora</span><span class="val">${alert.date} ${alert.time}</span></div>
+  </div>
+  <button class="btn" onclick="window.close()">✓ ENTENDIDO — CERRAR</button>
+</div>
+</body>
+</html>`);
+  alertPopupWin.document.close();
+
+  // Enfocar el popup
+  alertPopupWin.focus();
+
+  // Pedir permiso de notificaciones si no está concedido
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
 function resolveFromOverlay() {
   // Cualquier usuario puede marcar como atendida desde el overlay
   stopAlarm();
@@ -1076,6 +1191,17 @@ function urlBase64ToUint8Array(base64String) {
     localStorage.removeItem('nsg_session');
   }
 })();
+
+// Fix foco en input nombre para PWA instalada en Android
+document.addEventListener('DOMContentLoaded', () => {
+  const welcomeVisible = document.getElementById('welcomeScreen').style.display !== 'none';
+  if (welcomeVisible) {
+    setTimeout(() => {
+      const nameInput = document.getElementById('userNameInput');
+      if (nameInput && !nameInput.value) nameInput.focus();
+    }, 400);
+  }
+});
 
 // Actualizar contadores de tiempo cada 30 segundos
 function updateTimers() {
