@@ -225,6 +225,7 @@ let localHistorial = [];
 // Audio via <audio> HTML — sin AudioContext, compatible con todos los navegadores y móviles
 let alarmInterval = null;
 let alarmAudio = null;
+const activeAudios = []; // rastrear TODOS los objetos Audio activos
 let pendingAlertType = '';
 let resolveTargetId  = '';
 let socket = null;
@@ -264,16 +265,21 @@ function initAudio() {
 
 function stopAlarm() {
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
+  // Detener TODOS los audios activos, no solo el último
+  while (activeAudios.length > 0) {
+    const a = activeAudios.pop();
+    try { a.pause(); a.currentTime = 0; } catch(e) {}
+  }
   if (alarmAudio) {
-    alarmAudio.pause();
-    alarmAudio.currentTime = 0;
+    try { alarmAudio.pause(); alarmAudio.currentTime = 0; } catch(e) {}
     alarmAudio = null;
   }
-  // Registrar alerta como silenciada
   if (currentSoundingAlertId) {
     silencedAlerts.add(currentSoundingAlertId);
     currentSoundingAlertId = null;
   }
+  // Detener vibración
+  if (navigator.vibrate) navigator.vibrate(0);
 }
 
 function playAlarm(type, alertId) {
@@ -285,13 +291,26 @@ function playAlarm(type, alertId) {
     const audio = new Audio(src);
     audio.volume = 0.8;
     alarmAudio = audio;
+    activeAudios.push(audio); // registrar para poder detenerlo
+    // Limpiar audios terminados del array
+    audio.onended = () => {
+      const i = activeAudios.indexOf(audio);
+      if (i >= 0) activeAudios.splice(i, 1);
+    };
     audio.play().catch(() => {});
     return audio;
   }
   
-  playOnce();
+  const vibratePattern = type === 'urgente' ? [400,150,400,150,600] : type === 'accidente' ? [300,100,300,100,400] : [300,100,300];
+
+  function playAndVibrate() {
+    playOnce();
+    if (navigator.vibrate) navigator.vibrate(vibratePattern);
+  }
+
+  playAndVibrate();
   const interval = type === 'urgente' ? 900 : type === 'accidente' ? 1000 : 1100;
-  alarmInterval = setInterval(() => playOnce(), interval);
+  alarmInterval = setInterval(() => playAndVibrate(), interval);
 }
 
 
@@ -464,10 +483,7 @@ function connectToServer() {
           playAlarm(alert.type, alert.id);
           showSaeOverlay(alert);
           showToast('🚨 ' + alert.type.toUpperCase() + ': ' + alert.sender + ' en ' + alert.location, 'info');
-          // Vibración en móvil
-          if (navigator.vibrate) {
-            navigator.vibrate(alert.type === 'urgente' ? [400,150,400,150,600] : alert.type === 'accidente' ? [300,100,300,100,400] : [300,100,300]);
-          }
+          // Vibración manejada dentro de playAlarm (continua hasta stopAlarm)
           // Popup en pestaña separada si el documento no está visible
           if (document.hidden || document.visibilityState === 'hidden') {
             showAlertPopup(alert);
