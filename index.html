@@ -96,6 +96,8 @@
     <footer style="font-size:0.8rem;color:var(--muted);text-align:center;padding:14px 0 4px;border-top:1px solid var(--border);margin-top:16px;">
       Derechos reservados - Creado por <b>Franco</b>
       <br><button id="installBtn" onclick="triggerInstall()" style="display:none; margin-top:8px; padding:8px 16px; background:transparent; border:1.5px solid var(--blue-lite); border-radius:8px; color:var(--blue-lite); cursor:pointer;">📲 Instalar app</button>
+      <br><button id="pushBtn" onclick="activatePush()" style="margin-top:8px; padding:10px 20px; background:transparent; border:1.5px solid var(--green); border-radius:8px; color:var(--green); cursor:pointer; font-weight:600;">🔔 Activar alertas en este dispositivo</button>
+      <div id="pushStatus" style="margin-top:6px;font-size:0.75rem;"></div>
     </footer>
   </div>
 
@@ -392,6 +394,8 @@ async function enterApp() {
   connectToServer();
   renderAlerts();
   if (myRole === 'admin') loadHistorial();
+  // Verificar estado push
+  setTimeout(checkPushStatus, 1500);
 }
 
 function logoutApp() {
@@ -1266,6 +1270,49 @@ function updateTimers() {
   });
 }
 setInterval(updateTimers, 30000);
+
+// Activar push manualmente
+async function activatePush() {
+  const btn = document.getElementById('pushBtn');
+  const status = document.getElementById('pushStatus');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Activando...'; }
+
+  try {
+    // Pedir permiso de notificaciones
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      if (status) { status.textContent = '❌ Permiso denegado. Ve a Ajustes → Apps → Pánico NSG → Notificaciones y actívalas.'; status.style.color = 'var(--red)'; }
+      if (btn) { btn.disabled = false; btn.textContent = '🔔 Activar alertas en este dispositivo'; }
+      return;
+    }
+
+    // Suscribir al push
+    await requestPushSub();
+
+    if (status) { status.textContent = '✅ ¡Alertas activadas! Recibirás notificaciones aunque la pantalla esté apagada.'; status.style.color = 'var(--green)'; }
+    if (btn) { btn.textContent = '✅ Alertas activas'; btn.style.borderColor = 'var(--green)'; btn.style.color = 'var(--green)'; }
+  } catch(e) {
+    if (status) { status.textContent = '❌ Error: ' + e.message; status.style.color = 'var(--red)'; }
+    if (btn) { btn.disabled = false; btn.textContent = '🔔 Activar alertas en este dispositivo'; }
+  }
+}
+
+// Verificar estado push al cargar
+async function checkPushStatus() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    const btn = document.getElementById('pushBtn');
+    const status = document.getElementById('pushStatus');
+    if (sub) {
+      if (btn) { btn.textContent = '✅ Alertas activas'; btn.style.borderColor = 'var(--green)'; }
+      if (status) { status.textContent = 'Este dispositivo recibirá alertas en background.'; status.style.color = 'var(--green)'; }
+    } else {
+      if (status) { status.textContent = 'Toca el botón para recibir alertas con pantalla apagada.'; status.style.color = 'var(--muted)'; }
+    }
+  } catch(e) {}
+}
 
 // PWA Install
 let deferredPrompt = null;
