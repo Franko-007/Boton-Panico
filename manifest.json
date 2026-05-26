@@ -2,12 +2,14 @@
   "name": "Botón de Pánico – NSG",
   "short_name": "Pánico NSG",
   "description": "Sistema de alertas de emergencia para Colegio NSG",
+  "id": "/",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0a0f1e",
   "theme_color": "#0a0f1e",
   "orientation": "portrait",
   "lang": "es",
+  "categories": ["education", "utilities"],
   "icons": [
     {
       "src": "icon-192.png",
@@ -20,6 +22,15 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": ["any", "maskable"]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Botón de Pánico NSG"
     }
   ]
 }
