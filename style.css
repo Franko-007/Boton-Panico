@@ -402,6 +402,20 @@ body {
 .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
 .btn-sae-close:active { background: rgba(255,255,255,0.5); transform: scale(0.97); }
 
+.btn-sae-false {
+  background: rgba(0,0,0,0.3); color: rgba(255,255,255,0.6);
+  border: 1.5px solid rgba(255,255,255,0.25); border-radius: 14px;
+  padding: 12px 0; width: 100%;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 1rem;
+  font-weight: 700; letter-spacing: 1px;
+  cursor: pointer; transition: background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none; -webkit-user-select: none;
+}
+.btn-sae-false:hover  { background: rgba(0,0,0,0.45); color: rgba(255,255,255,0.8); }
+.btn-sae-false:active { background: rgba(0,0,0,0.55); transform: scale(0.97); }
+
 
 /* ── BOTÓN TURNO ──────────────────────────────────────────── */
 .btn-duty {
