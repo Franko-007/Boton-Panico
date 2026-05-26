@@ -511,16 +511,18 @@ function connectToServer() {
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
     if (updated.status === 'atendida' || updated.status === 'falsa_alarma') {
-      if (currentSoundingAlertId) stopAlarm();
+      // Detener sonido siempre — sin importar qué ID está sonando
+      stopAlarm();
+      // Registrar como silenciado para que no vuelva a sonar
+      silencedAlerts.add(updated.id);
+      // Cerrar overlay si está visible
       const overlayVisible = document.getElementById('saeOverlay').classList.contains('visible');
-      if (overlayVisible) {
-        silencedAlerts.add(updated.id);
-        closeSaeOverlay(true);
-      }
-      if (updated.resolved_by) {
-        const emoji = updated.status === 'falsa_alarma' ? '🚫' : '✅';
-        showToast(emoji + ' ' + (updated.status === 'falsa_alarma' ? 'Falsa alarma' : 'Atendido') + ' por ' + updated.resolved_by, 'success');
-      }
+      if (overlayVisible) closeSaeOverlay(true);
+      // Toast para todos
+      const emoji = updated.status === 'falsa_alarma' ? '🚫' : '✅';
+      const accion = updated.status === 'falsa_alarma' ? 'Falsa alarma' : 'Atendido';
+      const quien = updated.resolved_by || 'alguien';
+      showToast(emoji + ' ' + accion + ' por ' + quien, 'success');
     }
   });
 
