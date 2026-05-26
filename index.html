@@ -31,15 +31,10 @@
         <input type="text" id="userNameInput" class="field-input"
           placeholder="Ej: Prof. Franco"
           maxlength="30"
-          autocomplete="off"
-          autocorrect="off"
+          autocomplete="given-name"
           autocapitalize="words"
-          spellcheck="false"
           inputmode="text"
-          ontouchstart="this.focus(); this.click();"
-          onclick="this.focus();"
-          onfocus="this.removeAttribute('readonly');"
-          readonly>
+          enterkeyhint="next">
       </div>
       <div>
         <div class="field-label">Contraseña</div>
@@ -1303,14 +1298,26 @@ function urlBase64ToUint8Array(base64String) {
 
 // Fix foco en input nombre para PWA instalada en Android
 document.addEventListener('DOMContentLoaded', () => {
-  const welcomeVisible = document.getElementById('welcomeScreen').style.display !== 'none';
-  if (welcomeVisible) {
-    setTimeout(() => {
+  // Dar foco al primer campo después de que cargue la pantalla
+  setTimeout(() => {
+    const screen = document.getElementById('welcomeScreen');
+    if (screen && screen.style.display !== 'none') {
       const nameInput = document.getElementById('userNameInput');
-      if (nameInput && !nameInput.value) nameInput.focus();
-    }, 400);
-  }
+      if (nameInput && !nameInput.value) {
+        nameInput.focus();
+        // Trick adicional para Android TWA
+        nameInput.click();
+      }
+    }
+  }, 600);
 });
+
+// Asegurar que los inputs respondan al toque en PWA
+document.addEventListener('touchstart', function(e) {
+  if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+    e.target.focus();
+  }
+}, { passive: true });
 
 // Actualizar contadores de tiempo cada 30 segundos
 function updateTimers() {
