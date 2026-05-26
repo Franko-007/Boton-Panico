@@ -28,27 +28,17 @@
     <div class="welcome-card">
       <div>
         <div class="field-label">Tu nombre</div>
-        <div class="field-input-tap" id="nameTapField" onclick="openNameInput()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
-          <span id="nameTapText" style="color:var(--muted)">Toca para escribir tu nombre</span>
-          <span style="color:var(--muted);font-size:0.8rem">✏️</span>
-        </div>
-        <input type="text" id="userNameInput" class="field-input" style="display:none"
+        <input type="text" id="userNameInput" class="field-input"
           placeholder="Ej: Prof. Franco" maxlength="30"
-          autocomplete="given-name" autocapitalize="words" inputmode="text"
-          oninput="updateNameDisplay(this.value)"
-          onblur="hideNameInput()">
+          autocomplete="given-name" autocapitalize="words"
+          style="-webkit-user-select:text;user-select:text;">
       </div>
       <div>
         <div class="field-label">Contraseña</div>
-        <div class="field-input-tap" id="passTapField" onclick="openPassInput()" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
-          <span id="passTapText" style="color:var(--muted)">Toca para escribir contraseña</span>
-          <span style="color:var(--muted);font-size:0.8rem">🔒</span>
-        </div>
-        <input type="password" id="userPasswordInput" class="field-input" style="display:none"
+        <input type="password" id="userPasswordInput" class="field-input"
           placeholder="Contraseña de acceso"
-          autocomplete="current-password" inputmode="text"
-          oninput="updatePassDisplay(this.value)"
-          onblur="hidePassInput()">
+          autocomplete="current-password"
+          style="-webkit-user-select:text;user-select:text;">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
@@ -329,66 +319,6 @@ function selectRole(role, element) {
   myRole = role;
   document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
   element.classList.add('active');
-}
-
-function openNameInput() {
-  // Cerrar campo contraseña si estaba abierto
-  hidePassInput();
-  const tap = document.getElementById('nameTapField');
-  const inp = document.getElementById('userNameInput');
-  if (tap) tap.style.display = 'none';
-  if (inp) {
-    inp.style.display = 'block';
-    setTimeout(() => { inp.focus(); }, 50);
-  }
-}
-function hideNameInput() {
-  const inp = document.getElementById('userNameInput');
-  const tap = document.getElementById('nameTapField');
-  if (!inp) return;
-  // Siempre mostrar el valor actual aunque esté vacío
-  inp.style.display = 'none';
-  if (tap) {
-    tap.style.display = 'flex';
-    const txt = document.getElementById('nameTapText');
-    if (txt) {
-      txt.textContent = inp.value || 'Toca para escribir tu nombre';
-      txt.style.color = inp.value ? 'var(--text)' : 'var(--muted)';
-    }
-  }
-}
-function updateNameDisplay(val) {
-  const txt = document.getElementById('nameTapText');
-  if (txt) { txt.textContent = val || 'Toca para escribir tu nombre'; txt.style.color = val ? 'var(--text)' : 'var(--muted)'; }
-}
-function openPassInput() {
-  // Cerrar campo nombre si estaba abierto
-  hideNameInput();
-  const tap = document.getElementById('passTapField');
-  const inp = document.getElementById('userPasswordInput');
-  if (tap) tap.style.display = 'none';
-  if (inp) {
-    inp.style.display = 'block';
-    setTimeout(() => { inp.focus(); }, 50);
-  }
-}
-function hidePassInput() {
-  const inp = document.getElementById('userPasswordInput');
-  const tap = document.getElementById('passTapField');
-  if (!inp) return;
-  inp.style.display = 'none';
-  if (tap) {
-    tap.style.display = 'flex';
-    const txt = document.getElementById('passTapText');
-    if (txt) {
-      txt.textContent = inp.value ? '••••••••••••' : 'Toca para escribir contraseña';
-      txt.style.color = inp.value ? 'var(--text)' : 'var(--muted)';
-    }
-  }
-}
-function updatePassDisplay(val) {
-  const txt = document.getElementById('passTapText');
-  if (txt) { txt.textContent = val ? '••••••••••••' : 'Toca para escribir contraseña'; txt.style.color = val ? 'var(--text)' : 'var(--muted)'; }
 }
 
 async function enterApp() {
@@ -1382,23 +1312,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 600);
 });
 
-// Cerrar inputs cuando se toca fuera de ellos
-document.addEventListener('mousedown', function(e) {
-  const nameInp = document.getElementById('userNameInput');
-  const passInp = document.getElementById('userPasswordInput');
-  if (nameInp && nameInp.style.display !== 'none' && e.target !== nameInp) hideNameInput();
-  if (passInp && passInp.style.display !== 'none' && e.target !== passInp) hidePassInput();
-});
+// Foco en inputs al tocar
 document.addEventListener('touchstart', function(e) {
-  const nameInp = document.getElementById('userNameInput');
-  const passInp = document.getElementById('userPasswordInput');
-  if (nameInp && nameInp.style.display !== 'none' && e.target !== nameInp) {
-    hideNameInput();
-  }
-  if (passInp && passInp.style.display !== 'none' && e.target !== passInp) {
-    hidePassInput();
-  }
-  // Foco en inputs al tocar
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
     e.target.focus();
   }
