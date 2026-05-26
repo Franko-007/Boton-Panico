@@ -363,7 +363,7 @@ io.on('connection', (socket) => {
   // Nuevo: marcar como falsa alarma
   socket.on('false_alarm', ({ alertId }) => {
     const user = users.get(socket.id);
-    if (!user || user.role !== 'admin') return;
+    if (!user) return; // cualquier rol puede marcar falsa alarma
     const alert = alertsMemory.find(a => a.id === alertId);
     if (!alert || alert.status === 'atendida' || alert.status === 'falsa_alarma') return;
     alert.status       = 'falsa_alarma';
