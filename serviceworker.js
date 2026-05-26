@@ -4,7 +4,7 @@
    - tag usa alertId en vez de string fijo → permite múltiples alertas simultáneas
    - eliminado setTimeout frágil → se usa message desde el cliente al estar listo
 ────────────────────────────────────────────────────────────── */
-const CACHE_NAME = 'panico-nsg-v4';
+const CACHE_NAME = 'panico-nsg-v5';
 const ASSETS = ['/', '/index.html', '/manifest.json', '/icon-192.png', '/icon-512.png', '/style.css'];
 
 self.addEventListener('install', event => {
