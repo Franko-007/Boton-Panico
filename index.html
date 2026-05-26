@@ -332,17 +332,29 @@ function selectRole(role, element) {
 }
 
 function openNameInput() {
+  // Cerrar campo contraseña si estaba abierto
+  hidePassInput();
   const tap = document.getElementById('nameTapField');
   const inp = document.getElementById('userNameInput');
   if (tap) tap.style.display = 'none';
-  if (inp) { inp.style.display = 'block'; inp.focus(); inp.click(); }
+  if (inp) {
+    inp.style.display = 'block';
+    setTimeout(() => { inp.focus(); }, 50);
+  }
 }
 function hideNameInput() {
   const inp = document.getElementById('userNameInput');
   const tap = document.getElementById('nameTapField');
-  if (inp && !inp.value) {
-    inp.style.display = 'none';
-    if (tap) tap.style.display = 'flex';
+  if (!inp) return;
+  // Siempre mostrar el valor actual aunque esté vacío
+  inp.style.display = 'none';
+  if (tap) {
+    tap.style.display = 'flex';
+    const txt = document.getElementById('nameTapText');
+    if (txt) {
+      txt.textContent = inp.value || 'Toca para escribir tu nombre';
+      txt.style.color = inp.value ? 'var(--text)' : 'var(--muted)';
+    }
   }
 }
 function updateNameDisplay(val) {
@@ -350,17 +362,28 @@ function updateNameDisplay(val) {
   if (txt) { txt.textContent = val || 'Toca para escribir tu nombre'; txt.style.color = val ? 'var(--text)' : 'var(--muted)'; }
 }
 function openPassInput() {
+  // Cerrar campo nombre si estaba abierto
+  hideNameInput();
   const tap = document.getElementById('passTapField');
   const inp = document.getElementById('userPasswordInput');
   if (tap) tap.style.display = 'none';
-  if (inp) { inp.style.display = 'block'; inp.focus(); inp.click(); }
+  if (inp) {
+    inp.style.display = 'block';
+    setTimeout(() => { inp.focus(); }, 50);
+  }
 }
 function hidePassInput() {
   const inp = document.getElementById('userPasswordInput');
   const tap = document.getElementById('passTapField');
-  if (inp && !inp.value) {
-    inp.style.display = 'none';
-    if (tap) tap.style.display = 'flex';
+  if (!inp) return;
+  inp.style.display = 'none';
+  if (tap) {
+    tap.style.display = 'flex';
+    const txt = document.getElementById('passTapText');
+    if (txt) {
+      txt.textContent = inp.value ? '••••••••••••' : 'Toca para escribir contraseña';
+      txt.style.color = inp.value ? 'var(--text)' : 'var(--muted)';
+    }
   }
 }
 function updatePassDisplay(val) {
