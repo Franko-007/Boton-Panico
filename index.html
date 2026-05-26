@@ -1184,18 +1184,49 @@ if ('serviceWorker' in navigator) {
 
 async function requestPushSub() {
   try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      console.warn('Push no soportado en este navegador');
+      return;
+    }
+    // Asegurar que el SW esté registrado y activo
+    let reg = await navigator.serviceWorker.getRegistration();
+    if (!reg) {
+      reg = await navigator.serviceWorker.register('/serviceworker.js');
+      // Esperar a que esté activo
+      await new Promise(resolve => {
+        if (reg.active) return resolve();
+        reg.addEventListener('updatefound', () => {
+          const sw = reg.installing;
+          sw.addEventListener('statechange', () => {
+            if (sw.state === 'activated') resolve();
+          });
+        });
+        setTimeout(resolve, 3000); // timeout 3s
+      });
+    }
+    // Esperar que esté listo
+    const readyReg = await navigator.serviceWorker.ready;
+    if (!readyReg || !readyReg.pushManager) {
+      console.warn('pushManager no disponible');
+      return;
+    }
     const res = await fetch('/vapid-public-key');
     if (!res.ok) return;
     const { key } = await res.json();
-    const sub = await navigator.serviceWorker.ready.pushManager.subscribe({
-      userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(key)
+    const sub = await readyReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(key)
     });
     await fetch('/push-subscribe', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ subscription: sub })
     });
-  } catch(e) { console.warn('Push no disponible', e); }
+    console.log('✅ Push subscription registrada');
+  } catch(e) {
+    console.warn('Push error:', e);
+    throw e; // re-throw para que activatePush muestre el error
+  }
 }
 
 function urlBase64ToUint8Array(base64String) {
