@@ -301,6 +301,7 @@ body {
 .hist-card.alerta  { border-left-color: var(--amber); }
 .hist-card.accidente { border-left-color: var(--purple); }
 .hist-card.atendida { border-left-color: var(--green); }
+.hist-card.falsa_alarma { border-left-color: var(--muted); opacity: 0.7; }
 .hist-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
 .hist-tipo { font-family: 'Barlow Condensed', sans-serif; font-size: 1rem; font-weight: 800; }
 .hist-tipo.urgente { color: var(--red); }
