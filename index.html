@@ -207,7 +207,10 @@
       <div class="sae-row"><span class="sae-lbl">Ubicación</span><span class="sae-val loc" id="saeLocation">—</span></div>
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
-    <button class="btn-sae-close" id="btnSaeClose" style="position:relative;z-index:10001;pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); resolveFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); resolveFromOverlay()">✓ ENTENDIDO — ATENDIDO</button>
+    <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;position:relative;z-index:10001;">
+      <button class="btn-sae-close" id="btnSaeClose" style="pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); resolveFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); resolveFromOverlay()">✓ ENTENDIDO — ATENDIDO</button>
+      <button class="btn-sae-false" id="btnSaeFalse" style="pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); falseAlarmFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); falseAlarmFromOverlay()">🚫 FALSA ALARMA</button>
+    </div>
   </div>
 </div>
 
@@ -813,18 +816,32 @@ function showAlertPopup(alert) {
 }
 
 function resolveFromOverlay() {
-  // Cualquier usuario puede marcar como atendida desde el overlay
   stopAlarm();
   document.getElementById('saeOverlay').classList.remove('visible');
   if (currentDisplayedAlertId) {
     silencedAlerts.add(currentDisplayedAlertId);
-    // Buscar el ID real (no local-xxx) en la lista de alertas
     const realAlert = alerts.find(a =>
       a.id === currentDisplayedAlertId ||
       (currentDisplayedAlertId.startsWith('local-') && a.sender === myName && a.status === 'activa')
     );
     if (realAlert && isConnected && socket) {
       socket.emit('resolve_alert', { alertId: realAlert.id, note: 'Atendido desde overlay por ' + myName });
+    }
+    currentDisplayedAlertId = null;
+  }
+}
+
+function falseAlarmFromOverlay() {
+  stopAlarm();
+  document.getElementById('saeOverlay').classList.remove('visible');
+  if (currentDisplayedAlertId) {
+    silencedAlerts.add(currentDisplayedAlertId);
+    const realAlert = alerts.find(a =>
+      a.id === currentDisplayedAlertId ||
+      (currentDisplayedAlertId.startsWith('local-') && a.sender === myName && a.status === 'activa')
+    );
+    if (realAlert && isConnected && socket) {
+      socket.emit('false_alarm', { alertId: realAlert.id });
     }
     currentDisplayedAlertId = null;
   }
