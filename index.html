@@ -1382,8 +1382,23 @@ document.addEventListener('DOMContentLoaded', () => {
   }, 600);
 });
 
-// Asegurar que los inputs respondan al toque en PWA
+// Cerrar inputs cuando se toca fuera de ellos
+document.addEventListener('mousedown', function(e) {
+  const nameInp = document.getElementById('userNameInput');
+  const passInp = document.getElementById('userPasswordInput');
+  if (nameInp && nameInp.style.display !== 'none' && e.target !== nameInp) hideNameInput();
+  if (passInp && passInp.style.display !== 'none' && e.target !== passInp) hidePassInput();
+});
 document.addEventListener('touchstart', function(e) {
+  const nameInp = document.getElementById('userNameInput');
+  const passInp = document.getElementById('userPasswordInput');
+  if (nameInp && nameInp.style.display !== 'none' && e.target !== nameInp) {
+    hideNameInput();
+  }
+  if (passInp && passInp.style.display !== 'none' && e.target !== passInp) {
+    hidePassInput();
+  }
+  // Foco en inputs al tocar
   if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
     e.target.focus();
   }
