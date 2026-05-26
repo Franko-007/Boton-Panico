@@ -840,32 +840,60 @@ function showAlertPopup(alert) {
 function resolveFromOverlay() {
   stopAlarm();
   document.getElementById('saeOverlay').classList.remove('visible');
+
+  let realAlert = null;
+
   if (currentDisplayedAlertId) {
     silencedAlerts.add(currentDisplayedAlertId);
-    const realAlert = alerts.find(a =>
-      a.id === currentDisplayedAlertId ||
-      (currentDisplayedAlertId.startsWith('local-') && a.sender === myName && a.status === 'activa')
-    );
-    if (realAlert && isConnected && socket) {
-      socket.emit('resolve_alert', { alertId: realAlert.id, note: 'Atendido desde overlay por ' + myName });
+    realAlert = alerts.find(a => a.id === currentDisplayedAlertId);
+    if (!realAlert && currentDisplayedAlertId.startsWith('local-')) {
+      realAlert = alerts.find(a => a.sender === myName && a.status === 'activa');
     }
     currentDisplayedAlertId = null;
+  }
+
+  if (!realAlert) {
+    realAlert = alerts.find(a => a.sender === myName && a.status === 'activa');
+  }
+  if (!realAlert) {
+    realAlert = alerts.find(a => a.status === 'activa');
+  }
+
+  if (realAlert && isConnected && socket) {
+    socket.emit('resolve_alert', { alertId: realAlert.id, note: 'Atendido desde overlay por ' + myName });
   }
 }
 
 function falseAlarmFromOverlay() {
   stopAlarm();
   document.getElementById('saeOverlay').classList.remove('visible');
+
+  // Buscar la alerta de múltiples formas
+  let realAlert = null;
+
   if (currentDisplayedAlertId) {
     silencedAlerts.add(currentDisplayedAlertId);
-    const realAlert = alerts.find(a =>
-      a.id === currentDisplayedAlertId ||
-      (currentDisplayedAlertId.startsWith('local-') && a.sender === myName && a.status === 'activa')
-    );
-    if (realAlert && isConnected && socket) {
-      socket.emit('false_alarm', { alertId: realAlert.id });
+    // 1. Por ID exacto
+    realAlert = alerts.find(a => a.id === currentDisplayedAlertId);
+    // 2. Por ID local (mismo emisor, activa)
+    if (!realAlert && currentDisplayedAlertId.startsWith('local-')) {
+      realAlert = alerts.find(a => a.sender === myName && a.status === 'activa');
     }
     currentDisplayedAlertId = null;
+  }
+
+  // 3. Si aún no encontró, tomar la alerta activa más reciente del emisor
+  if (!realAlert) {
+    realAlert = alerts.find(a => a.sender === myName && a.status === 'activa');
+  }
+
+  // 4. Si tampoco, tomar cualquier alerta activa más reciente
+  if (!realAlert) {
+    realAlert = alerts.find(a => a.status === 'activa');
+  }
+
+  if (realAlert && isConnected && socket) {
+    socket.emit('false_alarm', { alertId: realAlert.id });
   }
 }
 
