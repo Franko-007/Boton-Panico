@@ -863,7 +863,7 @@ function closeSaeOverlay(silent = false) {
 ═══════════════════════════════════════════════════════════════ */
 function renderAlerts() {
   const container = document.getElementById('alertsContainer');
-  const notAttended = alerts.filter(a => a.status !== 'atendida');
+  const notAttended = alerts.filter(a => a.status !== 'atendida' && a.status !== 'falsa_alarma');
 
   if (notAttended.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><p>Sin alertas activas</p></div>`;
@@ -892,7 +892,7 @@ function renderAlerts() {
           <div class="alert-tipo ${a.type}">
             ${a.type === 'urgente' ? '🆘 URGENTE' : a.type === 'accidente' ? '🟣 ACCIDENTE' : '⚠️ ALERTA'}
           </div>
-          <span class="alert-status-badge badge-${a.status}">${isOld ? 'SIN ATENDER' : a.status.toUpperCase()}</span>
+          <span class="alert-status-badge badge-${a.status}">${isOld ? 'SIN ATENDER' : a.status === 'falsa_alarma' ? 'FALSA ALARMA' : a.status.toUpperCase()}</span>
         </div>
         <div class="alert-meta">
           <div class="alert-row"><span class="lbl">Emisor</span><span class="val">${a.sender}</span></div>
@@ -979,7 +979,7 @@ async function loadHistorial() {
         <span class="hist-time">${a.date} ${(a.time||'').slice(0,5)}</span>
       </div>
       <div class="hist-row">👤 <b>${a.sender}</b> — 📍 <b>${a.location}</b></div>
-      <div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status.toUpperCase()}</b></div>
+      <div class="hist-row">Estado: <b style="color:${a.status==='atendida'?'var(--green)':a.status==='falsa_alarma'?'var(--muted)':a.status==='vista'?'var(--blue-lite)':'var(--red)'}">${a.status === 'falsa_alarma' ? 'FALSA ALARMA' : a.status.toUpperCase()}</b></div>
       ${a.resolved_by ? `<div class="hist-row">Atendido por: <b>${a.resolved_by}</b></div>` : ''}
       ${a.resolve_note ? `<div class="hist-note">💬 "${a.resolve_note}"</div>` : ''}
     </div>`
