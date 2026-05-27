@@ -44,11 +44,15 @@
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
-        <div class="field-label">Tipo de usuario</div>
-        <div class="role-selector">
-          <div class="role-option active emisor" onclick="selectRole('emisor', this)">🔵 Emisor</div>
-          <div class="role-option admin" onclick="selectRole('admin', this)">🟣 Admin</div>
-        </div>
+       <div class="field-label">Tipo de usuario</div>
+<div class="role-selector" style="display: flex; gap: 10px; width: 100%;">
+  <button type="button" class="role-option active emisor" onclick="selectRole('emisor', this)" style="flex: 1; cursor: pointer; background: #161d31; color: white; padding: 12px; border: none; border-radius: 6px;">
+    🔵 Emisor
+  </button>
+  <button type="button" class="role-option admin" onclick="selectRole('admin', this)" style="flex: 1; cursor: pointer; background: #161d31; color: white; padding: 12px; border: none; border-radius: 6px;">
+    🟣 Admin
+  </button>
+</div>
       </div>
       <button type="submit" class="btn-enter" onclick="console.log('button clicked directly')">INGRESAR AL SISTEMA</button>
     </form>
