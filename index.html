@@ -25,7 +25,7 @@
     <div class="welcome-logo">🚨</div>
     <div class="welcome-title">BOTÓN DE PÁNICO NSG</div>
     <p class="welcome-sub">Sistema de alertas de emergencia para el colegio</p>
-    <form class="welcome-card" onsubmit="handleLoginSubmit(event)">
+    <form class="welcome-card" onsubmit="handleLoginSubmit(event)" onclick="console.log('form clicked', event.target.tagName, event.target.className)">
       <div>
         <div class="field-label">Tu nombre</div>
         <input type="text" id="userNameInput" class="field-input"
@@ -48,7 +48,7 @@
           <div class="role-option admin" onclick="selectRole('admin', this)">🟣 Admin</div>
         </div>
       </div>
-      <button type="submit" class="btn-enter">INGRESAR AL SISTEMA</button>
+      <button type="submit" class="btn-enter" onclick="console.log('button clicked directly')">INGRESAR AL SISTEMA</button>
     </form>
   </div>
 </div>
