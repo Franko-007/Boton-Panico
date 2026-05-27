@@ -1410,5 +1410,26 @@ window.triggerInstall = function() {
   deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
 };
 </script>
+  <script>
+  function selectRole(role, element) {
+    // Cambia el rol globalmente
+    if (typeof myRole !== 'undefined') {
+      myRole = role;
+    } else {
+      window.myRole = role; // Por si acaso esté declarado de forma global en otro archivo
+    }
+    console.log("Rol cambiado a:", role);
+
+    // Quita la clase activa de todos los botones de rol
+    document.querySelectorAll('.role-option').forEach(btn => {
+      btn.classList.remove('active');
+    });
+
+    // Agrega la clase activa al botón que se presionó
+    if (element) {
+      element.classList.add('active');
+    }
+  }
+</script>
 </body>
 </html>
