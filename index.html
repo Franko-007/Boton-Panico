@@ -39,8 +39,7 @@
           placeholder="Contraseña de acceso"
           autocomplete="current-password"
           required
-          oninput="window._pass=this.value"
-          onblur="if(window._pass)this.value=window._pass">
+          oninput="window._pass=this.value">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
@@ -325,6 +324,13 @@ function selectRole(role, element) {
   myRole = role;
   document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
   element.classList.add('active');
+  // Limpiar contraseña al cambiar de rol para evitar confusión
+  const passInput = document.getElementById('userPasswordInput');
+  if (passInput) { passInput.value = ''; window._pass = ''; passInput.focus(); }
+  const loginError = document.getElementById('loginError');
+  if (loginError) loginError.style.display = 'none';
+  // Actualizar placeholder según rol
+  if (passInput) passInput.placeholder = role === 'admin' ? 'Contraseña de administrador' : 'Contraseña de acceso';
 }
 
 function handleLoginSubmit(event) {
