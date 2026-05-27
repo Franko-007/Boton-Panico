@@ -38,7 +38,9 @@
         <input type="password" id="userPasswordInput" class="field-input"
           placeholder="Contraseña de acceso"
           autocomplete="current-password"
-          required>
+          required
+          oninput="window._pass=this.value"
+          onblur="if(window._pass)this.value=window._pass">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
       <div>
@@ -340,7 +342,7 @@ async function enterApp() {
   }
 
   // Validar contraseña en el SERVIDOR
-  const password = passInput ? passInput.value.trim() : '';
+  const password = (passInput && passInput.value.trim()) ? passInput.value.trim() : (window._pass || '');
   const btnEnter = document.querySelector('.btn-enter');
   if (btnEnter) { btnEnter.disabled = true; btnEnter.textContent = 'VERIFICANDO...'; }
 
