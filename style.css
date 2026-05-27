@@ -418,6 +418,10 @@ body {
   /* Sin user-select para evitar selección de texto en móvil */
   user-select: none;
   -webkit-user-select: none;
+  pointer-events: none;
+}
+#saeOverlay.visible .btn-sae-close {
+  pointer-events: auto;
 }
 .btn-sae-close:hover  { background: rgba(255,255,255,0.3); }
 .btn-sae-close:active { background: rgba(255,255,255,0.5); transform: scale(0.97); }
@@ -432,6 +436,10 @@ body {
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none; -webkit-user-select: none;
+  pointer-events: none;
+}
+#saeOverlay.visible .btn-sae-false {
+  pointer-events: auto;
 }
 .btn-sae-false:hover  { background: rgba(0,0,0,0.45); color: rgba(255,255,255,0.8); }
 .btn-sae-false:active { background: rgba(0,0,0,0.55); transform: scale(0.97); }
