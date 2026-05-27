@@ -563,3 +563,18 @@ body {
   .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
   .btn-sae-close { margin-bottom: 20px; }
 }
+.role-selector {
+    display: flex !important;
+    gap: 12px !important;
+    width: 100% !important;
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+.role-option {
+    flex: 1 !important;
+    cursor: pointer !important;
+    position: relative !important;
+    z-index: 10000 !important;
+    pointer-events: auto !important; /* Fuerza al navegador a recibir clics */
+}
