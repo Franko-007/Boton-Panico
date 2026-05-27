@@ -205,8 +205,8 @@
       <div class="sae-row"><span class="sae-lbl">Hora</span><span class="sae-val" id="saeTime">—</span></div>
     </div>
     <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:340px;position:relative;z-index:10001;">
-      <button class="btn-sae-close" id="btnSaeClose" style="pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); resolveFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); resolveFromOverlay()">✓ ENTENDIDO — ATENDIDO</button>
-      <button class="btn-sae-false" id="btnSaeFalse" style="pointer-events:auto !important;touch-action:manipulation;" onclick="initAudio(); falseAlarmFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); falseAlarmFromOverlay()">🚫 FALSA ALARMA</button>
+      <button class="btn-sae-close" id="btnSaeClose" onclick="initAudio(); resolveFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); resolveFromOverlay()">✓ ENTENDIDO — ATENDIDO</button>
+      <button class="btn-sae-false" id="btnSaeFalse" onclick="initAudio(); falseAlarmFromOverlay()" ontouchstart="event.preventDefault(); initAudio(); falseAlarmFromOverlay()">🚫 FALSA ALARMA</button>
     </div>
   </div>
 </div>
