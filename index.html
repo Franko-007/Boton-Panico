@@ -1431,5 +1431,57 @@ window.triggerInstall = function() {
     }
   }
 </script>
+  <style>
+  /* Forzamos que visualmente se note el cambio de botón */
+  .role-option {
+    cursor: pointer !important;
+    opacity: 0.6;
+    transition: all 0.2s ease;
+  }
+  .role-option.active {
+    opacity: 1 !important;
+    font-weight: bold !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid var(--blue-lite, #4a90e2) !important;
+  }
+</style>
+
+<script>
+  // Creamos la función directamente en el objeto global de la ventana (window)
+  window.selectRole = function(role, element) {
+    console.log("Intentando cambiar rol a:", role);
+    
+    // 1. Forzamos el cambio en cualquier variable global existente o nueva
+    if (typeof myRole !== 'undefined') { myRole = role; }
+    window.myRole = role;
+
+    // 2. Quitamos la clase active de todos los selectores de rol
+    document.querySelectorAll('.role-option').forEach(function(btn) {
+      btn.classList.remove('active');
+    });
+
+    // 3. Le asignamos la clase activa al elemento cliqueado
+    if (element) {
+      element.classList.add('active');
+    } else {
+      // Respaldo por clases si falla el elemento de referencia
+      var targetBtn = document.querySelector('.' + role);
+      if (targetBtn) targetBtn.classList.add('active');
+    }
+  };
+
+  // Código de respaldo: Asegurar que el formulario use el rol que seleccionamos al enviar
+  document.addEventListener("DOMContentLoaded", function() {
+    var form = document.querySelector('.welcome-card');
+    if (form) {
+      form.addEventListener("submit", function() {
+        // Nos aseguramos que antes de hacer el POST, la variable global use el rol elegido
+        if (window.myRole) {
+          myRole = window.myRole;
+        }
+      });
+    }
+  });
+</script>
 </body>
 </html>
