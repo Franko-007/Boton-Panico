@@ -26,36 +26,77 @@
     <div class="welcome-title">BOTÓN DE PÁNICO NSG</div>
     <p class="welcome-sub">Sistema de alertas de emergencia para el colegio</p>
     <form class="welcome-card" onsubmit="handleLoginSubmit(event)">
-      <div>
-        <div class="field-label">Tu nombre</div>
-        <input type="text" id="userNameInput" class="field-input"
-          placeholder="Ej: Prof. Franco" maxlength="30"
-          autocomplete="given-name" autocapitalize="words"
-          required>
-      </div>
-      <div>
-        <div class="field-label">Contraseña</div>
-        <input type="password" id="userPasswordInput" class="field-input"
-          placeholder="Contraseña de acceso"
-          autocomplete="current-password"
-          required
-          oninput="window._pass=this.value"
-          onblur="if(window._pass)this.value=window._pass">
-        <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
-      </div>
-      <div>
-      <div class="field-label">Tipo de usuario</div>
-<div class="role-selector" style="display: flex; gap: 10px; width: 100%; position: relative; z-index: 9999;">
-  <button type="button" class="role-option active emisor" onclick="selectRole('emisor', this)" style="flex: 1; cursor: pointer; background: #161d31; color: white; padding: 12px; border: none; border-radius: 6px; position: relative; z-index: 10000;">
-    🔵 Emisor
-  </button>
-  <button type="button" class="role-option admin" onclick="selectRole('admin', this)" style="flex: 1; cursor: pointer; background: #161d31; color: white; padding: 12px; border: none; border-radius: 6px; position: relative; z-index: 10000;">
-    🟣 Admin
-  </button>
-</div>
-      </div>
-      <button type="submit" class="btn-enter" onclick="console.log('button clicked directly')">INGRESAR AL SISTEMA</button>
-    </form>
+  
+  <div class="field-label">Tu Nombre</div>
+  <input type="text" id="userNameInput" class="field-input" placeholder="Ej: Prof. Franco" required>
+
+  <div class="field-label">Contraseña</div>
+  <input type="password" id="userPasswordInput" class="field-input" placeholder="Contraseña de acceso" required>
+  
+  <div id="passwordError" style="color: red; display: none;">Contraseña incorrecta</div>
+
+  <div class="field-label">Tipo de usuario</div>
+  <div class="role-selector" style="display: flex; gap: 10px; width: 100%;">
+    <button type="button" id="btn-emisor" class="role-option active" style="flex: 1; cursor: pointer; padding: 12px; border: 2px solid #4a90e2; background: #1f293d; color: white; border-radius: 6px; font-weight: bold;">
+      🔵 Emisor
+    </button>
+    <button type="button" id="btn-admin" class="role-option" style="flex: 1; cursor: pointer; padding: 12px; border: 2px solid transparent; background: #161d31; color: #a3b1cc; border-radius: 6px;">
+      🟣 Admin
+    </button>
+  </div>
+
+  <script>
+  (function() {
+    var btnEmisor = document.getElementById('btn-emisor');
+    var btnAdmin = document.getElementById('btn-admin');
+    
+    btnEmisor.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.myRole = 'emisor';
+      if(typeof myRole !== 'undefined') myRole = 'emisor';
+      
+      btnEmisor.style.border = '2px solid #4a90e2';
+      btnEmisor.style.background = '#1f293d';
+      btnEmisor.style.color = 'white';
+      btnEmisor.classList.add('active');
+      
+      btnAdmin.style.border = '2px solid transparent';
+      btnAdmin.style.background = '#161d31';
+      btnAdmin.style.color = '#a3b1cc';
+      btnAdmin.classList.remove('active');
+    };
+
+    btnAdmin.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      window.myRole = 'admin';
+      if(typeof myRole !== 'undefined') myRole = 'admin';
+      
+      btnAdmin.style.border = '2px solid #9b51e0';
+      btnAdmin.style.background = '#1f293d';
+      btnAdmin.style.color = 'white';
+      btnAdmin.classList.add('active');
+      
+      btnEmisor.style.border = '2px solid transparent';
+      btnEmisor.style.background = '#161d31';
+      btnEmisor.style.color = '#a3b1cc';
+      btnEmisor.classList.remove('active');
+    };
+
+    var form = document.querySelector('.welcome-card');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        var rolActivo = btnAdmin.classList.contains('active') ? 'admin' : 'emisor';
+        window.myRole = rolActivo;
+        if(typeof myRole !== 'undefined') myRole = rolActivo;
+      }, { capture: true });
+    }
+  })();
+  </script>
+  <button type="submit" class="btn-enter">INGRESAR AL SISTEMA</button>
+
+</form>
   </div>
 </div>
 
