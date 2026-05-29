@@ -42,19 +42,23 @@
           oninput="window._pass=this.value">
         <div id="loginError" style="color:var(--red);font-size:0.82rem;margin-top:6px;display:none;">Contraseña incorrecta</div>
       </div>
-      <div>
-      <div class="field-label">Tipo de usuario</div>
-<div class="role-selector">
-  <button type="button" class="role-option active emisor" onclick="selectRole('emisor', this)">
-    🔵 Emisor
-  </button>
-  <button type="button" class="role-option admin" onclick="selectRole('admin', this)">
-    🟣 Admin
-  </button>
-</div>
-      </div>
-      <button type="submit" class="btn-enter" onclick="console.log('button clicked directly')">INGRESAR AL SISTEMA</button>
+      <button type="submit" class="btn-enter">INGRESAR AL SISTEMA</button>
     </form>
+    <div class="field-label" style="margin-top:14px;">Tipo de usuario</div>
+    <div class="role-selector" id="roleSelectorDiv">
+      <div class="role-option active emisor" id="roleEmisor"
+           onclick="selectRole('emisor')"
+           onmousedown="selectRole('emisor')"
+           ontouchstart="selectRole('emisor')">
+        🔵 Emisor
+      </div>
+      <div class="role-option admin" id="roleAdmin"
+           onclick="selectRole('admin')"
+           onmousedown="selectRole('admin')"
+           ontouchstart="selectRole('admin')">
+        🟣 Admin
+      </div>
+    </div>
   </div>
 </div>
 
@@ -320,18 +324,25 @@ function playAlarm(type, alertId) {
 /* ═══════════════════════════════════════════════════════════════
    SELECCIÓN DE ROL Y LOGIN
 ═══════════════════════════════════════════════════════════════ */
-function selectRole(role, element) {
+function selectRole(role) {
   myRole = role;
-  document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
-  element.classList.add('active');
-  // Limpiar contraseña al cambiar de rol para evitar confusión
+  document.getElementById('roleEmisor').classList.toggle('active', role === 'emisor');
+  document.getElementById('roleEmisor').classList.toggle('emisor', role === 'emisor');
+  document.getElementById('roleAdmin').classList.toggle('active', role === 'admin');
+  document.getElementById('roleAdmin').classList.toggle('admin', true);
   const passInput = document.getElementById('userPasswordInput');
-  if (passInput) { passInput.value = ''; window._pass = ''; passInput.focus(); }
+  if (passInput) {
+    passInput.value = '';
+    window._pass = '';
+    passInput.placeholder = role === 'admin' ? 'Contraseña de administrador' : 'Contraseña de acceso';
+    passInput.focus();
+  }
   const loginError = document.getElementById('loginError');
   if (loginError) loginError.style.display = 'none';
-  // Actualizar placeholder según rol
-  if (passInput) passInput.placeholder = role === 'admin' ? 'Contraseña de administrador' : 'Contraseña de acceso';
+  console.log('Rol seleccionado:', role);
 }
+
+function getSelectedRole() { return myRole; }
 
 function handleLoginSubmit(event) {
   event.preventDefault();
@@ -362,7 +373,7 @@ async function enterApp() {
     const res  = await fetch('/auth/login', {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ name: myName, password, role: myRole }),
+      body: JSON.stringify({ name: myName, password, role: getSelectedRole() }),
       signal: controller.signal
     });
     clearTimeout(timeout);
@@ -430,8 +441,10 @@ function logoutApp() {
   if (passInput) passInput.value = '';
   if (loginError) loginError.style.display = 'none';
   document.querySelectorAll('.role-option').forEach(el => el.classList.remove('active'));
-  const emisorOpt = document.querySelector('.role-option.emisor');
+  const emisorOpt = document.getElementById('roleEmisor');
   if (emisorOpt) emisorOpt.classList.add('active');
+  const radioEmisor = document.querySelector('input[name="userRole"][value="emisor"]');
+  if (radioEmisor) radioEmisor.checked = true;
 
   // Resetear tabs
   const tabsRow = document.getElementById('tabsRow');
