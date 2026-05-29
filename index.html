@@ -231,6 +231,7 @@ let localHistorial = [];
 // Audio via <audio> HTML — sin AudioContext, compatible con todos los navegadores y móviles
 let alarmInterval = null;
 let alarmAudio = null;
+let alarmInterval2 = null;
 const activeAudios = []; // rastrear TODOS los objetos Audio activos
 let pendingAlertType = '';
 let resolveTargetId  = '';
@@ -286,37 +287,63 @@ function stopAlarm() {
   }
   // Detener vibración
   if (navigator.vibrate) navigator.vibrate(0);
+  if (typeof alarmInterval2 !== 'undefined' && alarmInterval2) {
+    clearTimeout(alarmInterval2);
+    alarmInterval2 = null;
+  }
 }
 
 function playAlarm(type, alertId) {
-  stopAlarm(); // detiene anterior
+  stopAlarm();
   currentSoundingAlertId = alertId || null;
   const src = ALARM_SOUNDS[type] || ALARM_SOUNDS.alerta;
-  
-  function playOnce() {
+
+  // ── Vibración estilo SAE: patrón largo y sostenido ──────────────────
+  // urgente:   pulsos cortos y agresivos continuos (como sirena SAE)
+  // accidente: pulsos medios rítmicos
+  // alerta:    pulsos suaves repetidos
+  const vibratePatterns = {
+    urgente:   [200,80,200,80,200,80,600,150,600,150,600,300],
+    accidente: [300,100,300,100,500,200,500,300],
+    alerta:    [400,150,400,150,400,400]
+  };
+  const vibratePattern = vibratePatterns[type] || vibratePatterns.alerta;
+
+  // Vibración: disparar patrón completo cada vez que termina
+  function sustainVibrate() {
+    if (!navigator.vibrate) return;
+    // Calcular duración total del patrón
+    const totalMs = vibratePattern.reduce((a, b) => a + b, 0);
+    navigator.vibrate(vibratePattern);
+    alarmInterval2 = setTimeout(() => {
+      if (currentSoundingAlertId !== null || alarmAudio) sustainVibrate();
+    }, totalMs + 100);
+  }
+
+  // ── Audio: usar loop nativo del elemento, más confiable que setInterval ──
+  function startAudio() {
     const audio = new Audio(src);
-    audio.volume = 0.8;
+    audio.volume = 1.0; // máximo — el sistema controla el volumen real
+    audio.loop = true;  // loop nativo, sin gaps ni superposición
     alarmAudio = audio;
-    activeAudios.push(audio); // registrar para poder detenerlo
-    // Limpiar audios terminados del array
+    activeAudios.push(audio);
     audio.onended = () => {
       const i = activeAudios.indexOf(audio);
       if (i >= 0) activeAudios.splice(i, 1);
     };
-    audio.play().catch(() => {});
+    // En APK/WebView a veces necesita un pequeño delay después de initAudio
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Retry una vez si falla (política autoplay del navegador)
+        setTimeout(() => audio.play().catch(() => {}), 300);
+      });
+    }
     return audio;
   }
-  
-  const vibratePattern = type === 'urgente' ? [400,150,400,150,600] : type === 'accidente' ? [300,100,300,100,400] : [300,100,300];
 
-  function playAndVibrate() {
-    playOnce();
-    if (navigator.vibrate) navigator.vibrate(vibratePattern);
-  }
-
-  playAndVibrate();
-  const interval = type === 'urgente' ? 900 : type === 'accidente' ? 1000 : 1100;
-  alarmInterval = setInterval(() => playAndVibrate(), interval);
+  startAudio();
+  sustainVibrate();
 }
 
 
