@@ -68,13 +68,20 @@ body {
   min-height: 50px;
 }
 .field-input-tap:active { border-color: var(--blue-lite); background: rgba(37,99,235,0.05); }
-.role-selector { display: flex; gap: 10px; margin: 8px 0; }
+.role-selector { display: flex; gap: 10px; margin: 8px 0; position: relative; z-index: 1; width: 100%; max-width: 360px; }
 .role-option {
   flex: 1; padding: 12px; border: 1.5px solid var(--border);
   background: var(--bg); border-radius: 10px;
   color: var(--muted); font-family: 'Barlow Condensed', sans-serif;
   font-size: 0.9rem; font-weight: 700; cursor: pointer;
   transition: all 0.2s; text-align: center;
+  display: flex; align-items: center; justify-content: center;
+  user-select: none; -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative; z-index: 2;
+  pointer-events: all;
+  min-height: 48px;
+  box-sizing: border-box;
 }
 .role-option:hover { border-color: var(--blue-lite); color: var(--text); }
 .role-option.active.emisor { background: rgba(37,99,235,0.2); border-color: var(--blue); color: var(--blue-lite); }
