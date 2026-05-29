@@ -271,25 +271,27 @@ function initAudio() {
 }
 
 function stopAlarm() {
+  // 1. Cancelar timers primero para evitar que se reactive
   if (alarmInterval) { clearInterval(alarmInterval); alarmInterval = null; }
-  // Detener TODOS los audios activos, no solo el último
+  if (alarmInterval2) { clearTimeout(alarmInterval2); alarmInterval2 = null; }
+
+  // 2. Detener TODOS los audios, desactivar loop antes de pausar
   while (activeAudios.length > 0) {
     const a = activeAudios.pop();
-    try { a.pause(); a.currentTime = 0; } catch(e) {}
+    try { a.loop = false; a.pause(); a.currentTime = 0; a.src = ''; } catch(e) {}
   }
   if (alarmAudio) {
-    try { alarmAudio.pause(); alarmAudio.currentTime = 0; } catch(e) {}
+    try { alarmAudio.loop = false; alarmAudio.pause(); alarmAudio.currentTime = 0; alarmAudio.src = ''; } catch(e) {}
     alarmAudio = null;
   }
+
+  // 3. Detener vibración
+  if (navigator.vibrate) navigator.vibrate(0);
+
+  // 4. Registrar ID silenciado
   if (currentSoundingAlertId) {
     silencedAlerts.add(currentSoundingAlertId);
     currentSoundingAlertId = null;
-  }
-  // Detener vibración
-  if (navigator.vibrate) navigator.vibrate(0);
-  if (typeof alarmInterval2 !== 'undefined' && alarmInterval2) {
-    clearTimeout(alarmInterval2);
-    alarmInterval2 = null;
   }
 }
 
@@ -312,11 +314,11 @@ function playAlarm(type, alertId) {
   // Vibración: disparar patrón completo cada vez que termina
   function sustainVibrate() {
     if (!navigator.vibrate) return;
-    // Calcular duración total del patrón
+    if (!alarmAudio) return; // detenerse si el audio ya fue parado
     const totalMs = vibratePattern.reduce((a, b) => a + b, 0);
     navigator.vibrate(vibratePattern);
     alarmInterval2 = setTimeout(() => {
-      if (currentSoundingAlertId !== null || alarmAudio) sustainVibrate();
+      if (alarmAudio) sustainVibrate(); // solo continúa si audio sigue activo
     }, totalMs + 100);
   }
 
@@ -371,10 +373,15 @@ function selectRole(role) {
 
 function getSelectedRole() { return myRole; }
 
+let _loginInProgress = false;
 function handleLoginSubmit(event) {
   event.preventDefault();
+  if (_loginInProgress) return; // evitar doble submit
+  _loginInProgress = true;
+  const btnEnter = document.querySelector('.btn-enter');
+  if (btnEnter) { btnEnter.disabled = true; btnEnter.textContent = 'VERIFICANDO...'; }
   initAudio();
-  enterApp();
+  enterApp().finally(() => { _loginInProgress = false; });
 }
 
 async function enterApp() {
@@ -392,7 +399,6 @@ async function enterApp() {
   // Validar contraseña en el SERVIDOR
   const password = (passInput && passInput.value.trim()) ? passInput.value.trim() : (window._pass || '');
   const btnEnter = document.querySelector('.btn-enter');
-  if (btnEnter) { btnEnter.disabled = true; btnEnter.textContent = 'VERIFICANDO...'; }
 
   try {
     const controller = new AbortController();
