@@ -35,6 +35,10 @@ const server = http.createServer(app);
 const io     = new Server(server, { cors: { origin: '*', methods: ['GET', 'POST'] } });
 
 app.use(express.static(path.join(__dirname)));
+// Servir explícitamente /.well-known (Express ignora carpetas que
+// empiezan con "." por defecto) — necesario para assetlinks.json,
+// que Chrome usa para verificar la TWA y delegar notificaciones.
+app.use('/.well-known', express.static(path.join(__dirname, '.well-known'), { dotfiles: 'allow' }));
 app.use(express.json());
 
 /* ── Memoria RAM ─────────────────────────────────────────────── */
