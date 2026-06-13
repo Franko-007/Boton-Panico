@@ -1,5 +1,13 @@
 /* ──────────────────────────────────────────────────────────────
-   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.8
+   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.9
+   Mejoras v3.9:
+   - Tokens de sesión (/auth/login) para que el Service Worker pueda
+     responder alertas desde la notificación push aunque la app esté
+     cerrada (sin guardar contraseñas en el dispositivo)
+   - Nuevos endpoints REST: /api/alerts/:id/false-alarm,
+     /api/alerts/:id/resolve (admin), /api/cancel-emergency (admin)
+   - Lógica de resolución de alertas unificada (helpers compartidos
+     entre Socket.IO y REST)
    Mejoras v3.8:
    - Botón rojo de EMERGENCIA (urgente) restringido a rol "admin"
      (validado también en el servidor, no sólo en el cliente)
@@ -14,6 +22,7 @@
    - Keep-alive endpoint
 ────────────────────────────────────────────────────────────── */
 require('dotenv').config();
+const crypto     = require('crypto');
 const express    = require('express');
 const http       = require('http');
 const { Server } = require('socket.io');
@@ -70,6 +79,44 @@ const PIN_ADMIN       = process.env.PIN_ADMIN        || '2026';
 const PASS_EMISOR     = process.env.PASS_EMISOR      || 'guadalupe2026';
 const PASS_ADMIN      = process.env.PASS_ADMIN       || 'Admin2026';
 
+/* ── Tokens de sesión ─────────────────────────────────────────
+   Permiten que el Service Worker responda a las alertas (botones
+   de acción en la notificación push: "Falsa alarma" / "Desactivar
+   emergencia") aunque la app esté completamente cerrada, sin tener
+   que guardar la contraseña del usuario en el dispositivo.
+   token -> { name, role, expiresAt }
+──────────────────────────────────────────────────────────────── */
+const sessionTokens = new Map();
+const TOKEN_TTL_MS  = 60 * 24 * 60 * 60 * 1000; // 60 días
+
+function createSessionToken(name, role) {
+  const token = crypto.randomBytes(24).toString('hex');
+  sessionTokens.set(token, { name, role, expiresAt: Date.now() + TOKEN_TTL_MS });
+  return token;
+}
+
+function requireAuth(roles) {
+  return (req, res, next) => {
+    const auth = req.headers['authorization'] || '';
+    const token = auth.startsWith('Bearer ') ? auth.slice(7) : (req.body && req.body.token);
+    const session = token ? sessionTokens.get(token) : null;
+    if (!session || session.expiresAt < Date.now()) {
+      return res.status(401).json({ ok: false, error: 'Sesión inválida o expirada' });
+    }
+    if (roles && !roles.includes(session.role)) {
+      return res.status(403).json({ ok: false, error: 'No autorizado' });
+    }
+    req.session = session;
+    next();
+  };
+}
+
+// Limpieza periódica de tokens expirados
+setInterval(() => {
+  const now = Date.now();
+  for (const [token, s] of sessionTokens) if (s.expiresAt < now) sessionTokens.delete(token);
+}, 60 * 60 * 1000);
+
 // Endpoint principal de autenticación (valida contraseña + rol en servidor)
 app.post('/auth/login', (req, res) => {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
@@ -86,7 +133,8 @@ app.post('/auth/login', (req, res) => {
   if (password !== expectedPass) {
     return res.status(401).json({ ok: false, error: 'Contraseña incorrecta' });
   }
-  return res.json({ ok: true, role });
+  const token = createSessionToken((name || '').trim().slice(0, 50) || 'Usuario', role);
+  return res.json({ ok: true, role, token });
 });
 
 // Mantener compatibilidad con verify-pin (usado por historial)
@@ -306,6 +354,69 @@ function getChileDate() {
 }
 function generateId() { return `${Date.now()}-${Math.random().toString(36).substr(2,9)}`; }
 
+/* ── Acciones sobre alertas (compartidas entre Socket.IO y REST) ─
+   Las usan tanto la app abierta (vía socket) como las acciones de
+   las notificaciones push (vía REST, app cerrada).
+──────────────────────────────────────────────────────────────── */
+function markAlertResolved(alertId, userName, note) {
+  const alert = alertsMemory.find(a => a.id === alertId);
+  if (!alert || alert.status === 'atendida' || alert.status === 'falsa_alarma') return null;
+  alert.status       = 'atendida';
+  alert.resolved_by  = userName;
+  alert.resolve_note = (note || '').slice(0, 300);
+  alert.resolved_at  = getChileTime();
+  io.emit('alert_updated', { ...alert });
+  updateSheetRow(alert);
+  return alert;
+}
+
+function markAlertFalseAlarm(alertId, userName) {
+  const alert = alertsMemory.find(a => a.id === alertId);
+  if (!alert || alert.status === 'atendida' || alert.status === 'falsa_alarma') return null;
+  alert.status       = 'falsa_alarma';
+  alert.resolved_by  = userName;
+  alert.resolve_note = 'Falsa alarma';
+  alert.resolved_at  = getChileTime();
+  io.emit('alert_updated', { ...alert });
+  updateSheetRow(alert);
+  return alert;
+}
+
+function cancelAllEmergencies(userName) {
+  const affected = alertsMemory.filter(a =>
+    a.type === 'urgente' && a.status !== 'atendida' && a.status !== 'falsa_alarma'
+  );
+  affected.forEach(alert => {
+    alert.status       = 'atendida';
+    alert.resolved_by  = userName;
+    alert.resolve_note = 'Emergencia desactivada por administrador';
+    alert.resolved_at  = getChileTime();
+    io.emit('alert_updated', { ...alert });
+    updateSheetRow(alert);
+  });
+  return affected;
+}
+
+/* ── Acciones rápidas desde notificación push (app cerrada) ──────
+   Requieren un token de sesión emitido en /auth/login (ver arriba).
+──────────────────────────────────────────────────────────────── */
+app.post('/api/alerts/:id/false-alarm', requireAuth(['emisor','admin']), (req, res) => {
+  const alert = markAlertFalseAlarm(req.params.id, req.session.name);
+  if (!alert) return res.json({ ok: true, changed: false });
+  res.json({ ok: true, changed: true });
+});
+
+app.post('/api/alerts/:id/resolve', requireAuth(['admin']), (req, res) => {
+  const alert = markAlertResolved(req.params.id, req.session.name, req.body && req.body.note ? req.body.note : 'Atendido desde notificación');
+  if (!alert) return res.json({ ok: true, changed: false });
+  res.json({ ok: true, changed: true });
+});
+
+app.post('/api/cancel-emergency', requireAuth(['admin']), (req, res) => {
+  const affected = cancelAllEmergencies(req.session.name);
+  res.json({ ok: true, affected: affected.length });
+});
+
 const users = new Map();
 
 /* ── WebSocket ───────────────────────────────────────────────── */
@@ -361,28 +472,14 @@ io.on('connection', (socket) => {
   socket.on('resolve_alert', ({ alertId, note }) => {
     const user = users.get(socket.id);
     if (!user) return;
-    const alert = alertsMemory.find(a => a.id === alertId);
-    if (!alert || alert.status === 'atendida' || alert.status === 'falsa_alarma') return;
-    alert.status       = 'atendida';
-    alert.resolved_by  = user.name;
-    alert.resolve_note = (note||'').slice(0,300);
-    alert.resolved_at  = getChileTime();
-    io.emit('alert_updated', { ...alert });
-    updateSheetRow(alert);
+    markAlertResolved(alertId, user.name, note);
   });
 
   // Nuevo: marcar como falsa alarma
   socket.on('false_alarm', ({ alertId }) => {
     const user = users.get(socket.id);
     if (!user) return; // cualquier rol puede marcar falsa alarma
-    const alert = alertsMemory.find(a => a.id === alertId);
-    if (!alert || alert.status === 'atendida' || alert.status === 'falsa_alarma') return;
-    alert.status       = 'falsa_alarma';
-    alert.resolved_by  = user.name;
-    alert.resolve_note = 'Falsa alarma';
-    alert.resolved_at  = getChileTime();
-    io.emit('alert_updated', { ...alert });
-    updateSheetRow(alert);
+    markAlertFalseAlarm(alertId, user.name);
   });
 
   // Desactivar EMERGENCIA: sólo admin. Resuelve TODAS las alertas
@@ -390,17 +487,7 @@ io.on('connection', (socket) => {
   socket.on('cancel_emergency', () => {
     const user = users.get(socket.id);
     if (!user || user.role !== 'admin') return;
-    const affected = alertsMemory.filter(a =>
-      a.type === 'urgente' && a.status !== 'atendida' && a.status !== 'falsa_alarma'
-    );
-    affected.forEach(alert => {
-      alert.status       = 'atendida';
-      alert.resolved_by  = user.name;
-      alert.resolve_note = 'Emergencia desactivada por administrador';
-      alert.resolved_at  = getChileTime();
-      io.emit('alert_updated', { ...alert });
-      updateSheetRow(alert);
-    });
+    cancelAllEmergencies(user.name);
   });
 
   // Turno activo
