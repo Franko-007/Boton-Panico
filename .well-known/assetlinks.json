@@ -1,0 +1,10 @@
+[{
+     "relation": ["delegate_permission/common.handle_all_urls"],
+     "target": {
+       "namespace": "android_app",
+       "package_name": "com.onrender.boton_panico_4y6a.twa",
+       "sha256_cert_fingerprints": [
+         "76:B1:33:8A:C8:A4:49:F5:07:A7:B1:52:98:7D:FE:2E:79:FF:D5:27:6F:9F:6F:F5:4E:1B:E6:0E:B1:A9:02:35"
+       ]
+     }
+   }]
