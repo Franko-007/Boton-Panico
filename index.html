@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1e">
   <title>🚨 Botón de Pánico – NSG</title>
-  <!-- v3.6 -->
+  <!-- v3.8 -->
   <link rel="manifest" href="/manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -47,15 +47,11 @@
     <div class="field-label" style="margin-top:14px;">Tipo de usuario</div>
     <div class="role-selector" id="roleSelectorDiv">
       <div class="role-option active emisor" id="roleEmisor"
-           onclick="selectRole('emisor')"
-           onmousedown="selectRole('emisor')"
-           ontouchstart="selectRole('emisor')">
+           onclick="selectRole('emisor')">
         🔵 Emisor
       </div>
       <div class="role-option admin" id="roleAdmin"
-           onclick="selectRole('admin')"
-           onmousedown="selectRole('admin')"
-           ontouchstart="selectRole('admin')">
+           onclick="selectRole('admin')">
         🟣 Admin
       </div>
     </div>
@@ -85,10 +81,14 @@
   </div>
 
   <div id="emisor" class="panel active">
-    <div class="btn-grid">
+    <div class="btn-grid" id="btnGrid">
       <button class="panic-btn btn-urgente" id="btnUrg" onclick="openLocationModal('urgente')">
         🆘<br>NECESITO<br>AYUDA<br>URGENTE
         <div class="hold-hint">Toca para activar</div>
+      </button>
+      <button class="panic-btn btn-cancel-emergency" id="btnCancelEmergency" onclick="cancelEmergency()" style="display:none">
+        🟢<br>DESACTIVAR<br>EMERGENCIA
+        <div class="hold-hint">Solo Admin · Detiene la alarma roja para todos</div>
       </button>
       <button class="panic-btn btn-accidente" id="btnAcc" onclick="openLocationModal('accidente')">
         🟣<br>ACCIDENTE
@@ -269,8 +269,57 @@ const ALARM_SOUNDS = {
   alerta:    'data:audio/wav;base64,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'
 };
 
+/* ── Motor de audio amplificado (Web Audio API) ──────────────────
+ * Para que la alarma suene LO MÁS FUERTE POSIBLE (estilo SAE) en
+ * navegadores de escritorio y en el APK (WebView de Android), el
+ * <audio> nativo se enruta a través de un AudioContext con un
+ * DynamicsCompressorNode (evita que se "rompa"/distorsione al máximo)
+ * seguido de un GainNode con ganancia > 1 (amplificación real por
+ * encima del volumen normal del sistema).
+ * ───────────────────────────────────────────────────────────── */
+let audioCtx = null;
+let alarmGainNode = null;
+let alarmCompressor = null;
+let wakeLock = null;
+
 function initAudio() {
-  // No-op: mantenida para compatibilidad con llamadas existentes
+  // Crear/recuperar el AudioContext en el primer gesto del usuario
+  // (requisito de los navegadores y de WebView para permitir audio).
+  try {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      audioCtx = new AC();
+      alarmCompressor = audioCtx.createDynamicsCompressor();
+      alarmCompressor.threshold.value = -12;
+      alarmCompressor.knee.value = 6;
+      alarmCompressor.ratio.value = 12;
+      alarmCompressor.attack.value = 0.003;
+      alarmCompressor.release.value = 0.15;
+
+      alarmGainNode = audioCtx.createGain();
+      // Amplificación: 3x el volumen normal (limitado por el compresor
+      // para que no se distorsione demasiado).
+      alarmGainNode.gain.value = 3.0;
+
+      alarmCompressor.connect(alarmGainNode);
+      alarmGainNode.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  } catch (e) { console.warn('initAudio error:', e); }
+}
+
+async function acquireWakeLock() {
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) { /* algunos navegadores/WebView no lo soportan: ignorar */ }
+}
+
+function releaseWakeLock() {
+  try { if (wakeLock) { wakeLock.release(); wakeLock = null; } } catch (e) {}
 }
 
 function stopAlarm() {
@@ -291,7 +340,10 @@ function stopAlarm() {
   // 3. Detener vibración
   if (navigator.vibrate) navigator.vibrate(0);
 
-  // 4. Registrar ID silenciado
+  // 4. Liberar wake lock (ya no necesitamos mantener la pantalla encendida)
+  releaseWakeLock();
+
+  // 5. Registrar ID silenciado
   if (currentSoundingAlertId) {
     silencedAlerts.add(currentSoundingAlertId);
     currentSoundingAlertId = null;
@@ -300,6 +352,8 @@ function stopAlarm() {
 
 function playAlarm(type, alertId) {
   stopAlarm();
+  initAudio(); // asegurar que el AudioContext esté listo/reanudado
+  acquireWakeLock();
   currentSoundingAlertId = alertId || null;
   const src = ALARM_SOUNDS[type] || ALARM_SOUNDS.alerta;
 
@@ -328,7 +382,7 @@ function playAlarm(type, alertId) {
   // ── Audio: usar loop nativo del elemento, más confiable que setInterval ──
   function startAudio() {
     const audio = new Audio(src);
-    audio.volume = 1.0; // máximo — el sistema controla el volumen real
+    audio.volume = 1.0; // máximo — la ganancia extra la aplica el GainNode
     audio.loop = true;  // loop nativo, sin gaps ni superposición
     alarmAudio = audio;
     activeAudios.push(audio);
@@ -336,11 +390,24 @@ function playAlarm(type, alertId) {
       const i = activeAudios.indexOf(audio);
       if (i >= 0) activeAudios.splice(i, 1);
     };
+
+    // Enrutar el <audio> a través del amplificador (GainNode + compresor)
+    // si el AudioContext está disponible. Si falla (por ejemplo, el
+    // navegador no soporta createMediaElementSource para este audio),
+    // se reproduce de forma normal sin amplificación.
+    try {
+      if (audioCtx && alarmCompressor) {
+        const node = audioCtx.createMediaElementSource(audio);
+        node.connect(alarmCompressor);
+      }
+    } catch (e) { /* fallback: audio sin amplificar */ }
+
     // En APK/WebView a veces necesita un pequeño delay después de initAudio
     const playPromise = audio.play();
     if (playPromise !== undefined) {
       playPromise.catch(() => {
-        // Retry una vez si falla (política autoplay del navegador)
+        // Retry: reintentar tras reanudar el contexto (políticas autoplay)
+        initAudio();
         setTimeout(() => audio.play().catch(() => {}), 300);
       });
     }
@@ -364,10 +431,10 @@ function selectRole(role) {
   document.getElementById('roleAdmin').classList.toggle('admin', true);
   const passInput = document.getElementById('userPasswordInput');
   if (passInput) {
-    passInput.value = '';
-    window._pass = '';
+    // FIX: ya no se borra el valor escrito por el usuario al cambiar de
+    // rol — esto causaba que la contraseña "se borrara sola" en Chrome
+    // cuando el usuario tocaba el selector de rol después de escribirla.
     passInput.placeholder = role === 'admin' ? 'Contraseña de administrador' : 'Contraseña de acceso';
-    passInput.focus();
   }
   const loginError = document.getElementById('loginError');
   if (loginError) loginError.style.display = 'none';
@@ -437,6 +504,8 @@ async function enterApp() {
   document.getElementById('roleLabel').textContent = myRole === 'admin' ? '🟣 Admin' : '🔵 Emisor';
   const btnDuty = document.getElementById('btnDuty');
   if (btnDuty) btnDuty.style.display = myRole === 'admin' ? 'flex' : 'none';
+
+  applyRoleUI();
 
   const tabsRow = document.getElementById('tabsRow');
   if (myRole === 'admin') {
@@ -617,6 +686,48 @@ function connectToServer() {
 
 function toggleDuty() {
   if (isConnected && socket) socket.emit('toggle_duty');
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SEPARACIÓN DE CARGOS — Botón rojo de EMERGENCIA solo para Admin
+═══════════════════════════════════════════════════════════════ */
+function applyRoleUI() {
+  const btnUrg = document.getElementById('btnUrg');
+  const btnCancel = document.getElementById('btnCancelEmergency');
+  if (btnUrg) {
+    // Sólo el ADMIN ve y puede activar el botón rojo de EMERGENCIA.
+    // Emisores normales sólo ven ACCIDENTE y ALERTA.
+    btnUrg.style.display = myRole === 'admin' ? '' : 'none';
+  }
+  if (btnCancel) {
+    // El botón "DESACTIVAR EMERGENCIA" sólo existe para admin, y sólo
+    // se muestra cuando hay una emergencia roja activa (ver updateEmergencyUI)
+    if (myRole !== 'admin') btnCancel.style.display = 'none';
+  }
+  updateEmergencyUI();
+}
+
+// Muestra/oculta el botón verde "DESACTIVAR EMERGENCIA" según si hay
+// alguna alerta tipo "urgente" activa o vista en este momento.
+function updateEmergencyUI() {
+  const btnCancel = document.getElementById('btnCancelEmergency');
+  if (!btnCancel) return;
+  if (myRole !== 'admin') { btnCancel.style.display = 'none'; return; }
+  const hasActiveEmergency = alerts.some(a =>
+    a.type === 'urgente' && a.status !== 'atendida' && a.status !== 'falsa_alarma'
+  );
+  btnCancel.style.display = hasActiveEmergency ? '' : 'none';
+}
+
+// Admin: desactiva (resuelve) TODAS las emergencias rojas activas de golpe.
+function cancelEmergency() {
+  initAudio();
+  if (!isConnected || !socket) { showToast('Sin conexión al servidor', 'info'); return; }
+  if (!confirm('¿Desactivar la EMERGENCIA para todos? Esto marcará como "Atendida" toda alerta roja activa.')) return;
+  socket.emit('cancel_emergency');
+  stopAlarm();
+  closeSaeOverlay(true);
+  showToast('🟢 Emergencia desactivada', 'success');
 }
 
 function renderDuty(dutyList) {
@@ -1028,6 +1139,7 @@ function renderAlerts() {
   }
 
   container.innerHTML = html;
+  updateEmergencyUI();
 }
 
 function markSeen(alertId) {
@@ -1345,6 +1457,8 @@ function urlBase64ToUint8Array(base64String) {
     const btnDuty = document.getElementById('btnDuty');
     if (btnDuty) btnDuty.style.display = myRole === 'admin' ? 'flex' : 'none';
 
+    applyRoleUI();
+
     const tabsRow = document.getElementById('tabsRow');
     if (myRole === 'admin') {
       tabsRow.className = 'tabs admin-tabs';
@@ -1362,6 +1476,13 @@ function urlBase64ToUint8Array(base64String) {
     localStorage.removeItem('nsg_session');
   }
 })();
+
+// Desbloquear el AudioContext con el primer toque/clic del usuario en
+// cualquier parte de la app — fundamental para que la alarma pueda
+// sonar a volumen máximo en el APK (WebView de Android).
+['touchstart','click','keydown'].forEach(evt => {
+  document.addEventListener(evt, () => { initAudio(); }, { passive: true, once: false });
+});
 
 // Fix foco en input nombre para PWA instalada en Android
 document.addEventListener('DOMContentLoaded', () => {
