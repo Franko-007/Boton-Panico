@@ -167,6 +167,18 @@ body {
   box-shadow: 0 0 35px rgba(139,92,246,0.6), 0 6px 20px rgba(0,0,0,0.5);
 }
 .btn-accidente:hover:not(:disabled) { box-shadow: 0 0 55px rgba(139,92,246,0.8), 0 6px 24px rgba(0,0,0,0.5); }
+.btn-cancel-emergency {
+  width: 195px; height: 195px; font-size: 1.05rem; letter-spacing: 0.5px;
+  background: radial-gradient(circle at 40% 35%, #6ee7b7 0%, #10b981 45%, #064e3b 100%);
+  border: 5px solid #a7f3d0;
+  box-shadow: 0 0 35px rgba(16,185,129,0.6), 0 6px 20px rgba(0,0,0,0.5);
+  animation: pulse-green 1.4s infinite;
+}
+.btn-cancel-emergency:hover:not(:disabled) { box-shadow: 0 0 55px rgba(16,185,129,0.8), 0 6px 24px rgba(0,0,0,0.5); }
+@keyframes pulse-green {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
 .hold-hint { font-size: 0.75rem; opacity: 0.8; margin-top: 6px; letter-spacing: 1px; }
 
 .feedback-msg {
@@ -567,6 +579,7 @@ body {
   .btn-urgente { width: 195px; height: 195px; font-size: 1.1rem; }
   .btn-alerta  { width: 155px; height: 155px; font-size: 0.95rem; }
   .btn-accidente { width: 175px; height: 175px; font-size: 1rem; }
+  .btn-cancel-emergency { width: 175px; height: 175px; font-size: 0.95rem; }
   .sae-body { padding: 16px 12px; justify-content: flex-start; padding-top: 40px; }
   .btn-sae-close { margin-bottom: 20px; }
 }
