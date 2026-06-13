@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0a0f1e">
   <title>🚨 Botón de Pánico – NSG</title>
-  <!-- v3.8 -->
+  <!-- v3.9 -->
   <link rel="manifest" href="/manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -229,6 +229,7 @@
 ═══════════════════════════════════════════════════════════════ */
 let myName   = '';
 let myRole   = 'emisor';
+let myToken  = '';
 let alerts   = [];
 let localHistorial = [];
 // Audio via <audio> HTML — sin AudioContext, compatible con todos los navegadores y móviles
@@ -490,6 +491,7 @@ async function enterApp() {
       if (loginError) { loginError.textContent = data.error || 'Contraseña incorrecta'; loginError.style.display = 'block'; }
       return;
     }
+    myToken = data.token || '';
   } catch(e) {
     if (btnEnter) { btnEnter.disabled = false; btnEnter.textContent = 'INGRESAR AL SISTEMA'; }
     if (loginError) { loginError.textContent = e.name === 'AbortError' ? 'Tiempo de espera agotado. Intenta de nuevo.' : 'Error de conexión. Intenta de nuevo.'; loginError.style.display = 'block'; }
@@ -517,7 +519,8 @@ async function enterApp() {
       <button class="tab" onclick="switchTab('dashboard',this)">📊 DASHBOARD</button>`;
   }
   // Guardar sesión para sobrevivir recargas
-  try { localStorage.setItem('nsg_session', JSON.stringify({ name: myName, role: myRole })); } catch(e) {}
+  try { localStorage.setItem('nsg_session', JSON.stringify({ name: myName, role: myRole, token: myToken })); } catch(e) {}
+  notifySWSession();
 
   initAudio();
   connectToServer();
@@ -532,11 +535,12 @@ function logoutApp() {
   closeSaeOverlay(true);
   if (socket) { socket.disconnect(); socket = null; }
   isConnected = false;
-  myName = ''; myRole = 'emisor';
+  myName = ''; myRole = 'emisor'; myToken = '';
   alerts = []; localHistorial = [];
   silencedAlerts.clear();
   currentSoundingAlertId = null;
   currentDisplayedAlertId = null;
+  clearSWSession();
 
   // Resetear formulario
   const nameInput = document.getElementById('userNameInput');
@@ -1384,6 +1388,31 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SESIÓN ↔ SERVICE WORKER
+   El SW guarda nombre/rol/token en IndexedDB para poder mostrar
+   botones de acción (✓ Atendido, 🚫 Falsa alarma, 🟢 Desactivar
+   emergencia) en la notificación push y responderlos por sí solo,
+   sin necesidad de que la app esté abierta.
+═══════════════════════════════════════════════════════════════ */
+async function notifySWSession() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active) {
+      reg.active.postMessage({ type: 'SET_SESSION', name: myName, role: myRole, token: myToken });
+    }
+  } catch (e) {}
+}
+
+async function clearSWSession() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    if (reg.active) reg.active.postMessage({ type: 'CLEAR_SESSION' });
+  } catch (e) {}
+}
+
 async function requestPushSub() {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -1447,6 +1476,7 @@ function urlBase64ToUint8Array(base64String) {
     if (!session.name || !session.role) return;
     myName = session.name;
     myRole = session.role;
+    myToken = session.token || '';
 
     // Restaurar UI sin pedir contraseña de nuevo
     document.getElementById('welcomeScreen').style.display = 'none';
@@ -1472,6 +1502,7 @@ function urlBase64ToUint8Array(base64String) {
     connectToServer();
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
+    notifySWSession();
   } catch(e) {
     localStorage.removeItem('nsg_session');
   }
