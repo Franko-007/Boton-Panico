@@ -1,4 +1,4 @@
-const CACHE_NAME = 'panico-nsg-v6';
+const CACHE_NAME = 'panico-nsg-v7';
 // NO cachear index.html para que siempre cargue la versión más reciente
 const ASSETS = ['/manifest.json', '/icon-192.png', '/icon-512.png', '/style.css'];
 
