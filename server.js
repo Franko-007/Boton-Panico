@@ -1,6 +1,11 @@
 /* ──────────────────────────────────────────────────────────────
-   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.7
-   Mejoras:
+   BOTÓN DE PÁNICO – COLEGIO NSG  |  server.js  v3.8
+   Mejoras v3.8:
+   - Botón rojo de EMERGENCIA (urgente) restringido a rol "admin"
+     (validado también en el servidor, no sólo en el cliente)
+   - Nuevo evento "cancel_emergency": admin puede desactivar/resolver
+     todas las alertas de emergencia activas con un toque
+   Mejoras previas (v3.7):
    - Contraseñas validadas en servidor (no en cliente)
    - Rate limiting en login
    - Turno activo por admin
@@ -321,7 +326,13 @@ io.on('connection', (socket) => {
   socket.on('send_alert', (data) => {
     const user = users.get(socket.id);
     if (!user || !['emisor','admin'].includes(user.role)) return;
-    const type = ['urgente','accidente','alerta'].includes(data.type) ? data.type : 'alerta';
+    let type = ['urgente','accidente','alerta'].includes(data.type) ? data.type : 'alerta';
+    // Seguridad: el botón rojo de EMERGENCIA (urgente) sólo puede ser
+    // activado por usuarios con rol "admin". Si un emisor intenta
+    // enviar 'urgente' (manipulando el cliente), se reduce a 'alerta'.
+    if (type === 'urgente' && user.role !== 'admin') {
+      type = 'alerta';
+    }
     const alert = {
       id: generateId(), sender: user.name,
       location: (data.location||'Sin ubicación').slice(0,100),
@@ -372,6 +383,24 @@ io.on('connection', (socket) => {
     alert.resolved_at  = getChileTime();
     io.emit('alert_updated', { ...alert });
     updateSheetRow(alert);
+  });
+
+  // Desactivar EMERGENCIA: sólo admin. Resuelve TODAS las alertas
+  // "urgente" activas/vistas de una sola vez (botón rojo OFF).
+  socket.on('cancel_emergency', () => {
+    const user = users.get(socket.id);
+    if (!user || user.role !== 'admin') return;
+    const affected = alertsMemory.filter(a =>
+      a.type === 'urgente' && a.status !== 'atendida' && a.status !== 'falsa_alarma'
+    );
+    affected.forEach(alert => {
+      alert.status       = 'atendida';
+      alert.resolved_by  = user.name;
+      alert.resolve_note = 'Emergencia desactivada por administrador';
+      alert.resolved_at  = getChileTime();
+      io.emit('alert_updated', { ...alert });
+      updateSheetRow(alert);
+    });
   });
 
   // Turno activo
