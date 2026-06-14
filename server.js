@@ -39,6 +39,11 @@ app.use(express.static(path.join(__dirname)));
 // empiezan con "." por defecto) — necesario para assetlinks.json,
 // que Chrome usa para verificar la TWA y delegar notificaciones.
 app.use('/.well-known', express.static(path.join(__dirname, '.well-known'), { dotfiles: 'allow' }));
+// Servir sonidos de alarma como archivos estáticos (evita embeber base64 en index.html)
+app.use('/sounds', express.static(path.join(__dirname, 'sounds'), {
+  maxAge: '7d',
+  setHeaders: (res) => { res.setHeader('Cache-Control', 'public, max-age=604800'); }
+}));
 app.use(express.json());
 
 /* ── Memoria RAM ─────────────────────────────────────────────── */
