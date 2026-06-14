@@ -317,10 +317,14 @@ async function sendPushToAll(alert) {
   if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
   const titles = { urgente: '🚨 EMERGENCIA', accidente: '🟣 ACCIDENTE', alerta: '⚠️ ALERTA' };
   const colors  = { urgente: '#ef4444', accidente: '#8b5cf6', alerta: '#f59e0b' };
+  // El campo "channel" permite que el DelegationService del APK enrute
+  // la notificación al canal nativo correcto (emergencia vs alerta normal).
+  const channels = { urgente: 'nsg_emergency', accidente: 'nsg_alert', alerta: 'nsg_alert' };
   const payload = JSON.stringify({
     title: `${titles[alert.type]||'⚠️ ALERTA'} – COLEGIO NSG`,
     body: `${alert.sender} en ${alert.location}`,
     type: alert.type, alertId: alert.id, color: colors[alert.type],
+    channel: channels[alert.type] || 'nsg_alert',
     sender: alert.sender, location: alert.location, message: alert.message, date: alert.date, time: alert.time
   });
   const dead = [];
