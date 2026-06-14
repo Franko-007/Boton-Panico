@@ -42,7 +42,13 @@ app.use('/.well-known', express.static(path.join(__dirname, '.well-known'), { do
 // Servir sonidos de alarma como archivos estáticos (evita embeber base64 en index.html)
 app.use('/sounds', express.static(path.join(__dirname, 'sounds'), {
   maxAge: '7d',
-  setHeaders: (res) => { res.setHeader('Cache-Control', 'public, max-age=604800'); }
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.wav')) {
+      res.setHeader('Content-Type', 'audio/wav');
+    }
+    res.setHeader('Cache-Control', 'public, max-age=604800');
+    res.setHeader('Accept-Ranges', 'bytes');
+  }
 }));
 app.use(express.json());
 
