@@ -522,6 +522,14 @@ async function enterApp() {
   try { localStorage.setItem('nsg_session', JSON.stringify({ name: myName, role: myRole, token: myToken })); } catch(e) {}
   notifySWSession();
 
+  // Activar push automáticamente sin esperar que el usuario toque el botón
+  setTimeout(async () => {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') await requestPushSub();
+    } catch(e) { console.warn('Push auto-activate:', e); }
+  }, 1000);
+
   initAudio();
   connectToServer();
   renderAlerts();
@@ -1503,6 +1511,12 @@ function urlBase64ToUint8Array(base64String) {
     renderAlerts();
     if (myRole === 'admin') loadHistorial();
     notifySWSession();
+    // Re-suscribir push automáticamente al restaurar sesión
+    setTimeout(async () => {
+      try {
+        if (Notification.permission === 'granted') await requestPushSub();
+      } catch(e) {}
+    }, 1500);
   } catch(e) {
     localStorage.removeItem('nsg_session');
   }
