@@ -130,13 +130,17 @@ self.addEventListener('push', event => {
 
     await self.registration.showNotification(title, {
       body,
-      tag: `alerta-nsg-${data.alertId || Date.now()}`,
+      tag: `alerta-nsg-${isUrg ? 'urgente' : isAcc ? 'accidente' : 'alerta'}-${data.alertId || Date.now()}`,
       renotify: true,
       requireInteraction: true,
       icon:  '/icon-192.png',
       badge: '/icon-192.png',
       vibrate: isUrg ? [400,150,400,150,600,150,400,150,600] : isAcc ? [300,100,300,100,400] : [300,100,300],
       color: color,
+      // El campo "channel" es leído por el DelegationService del APK para
+      // enrutar la notificación al canal nativo correcto (con sonido de alarma
+      // vs sonido de notificación normal). Solo tiene efecto en el APK TWA.
+      channel: data.channel || (isUrg ? 'nsg_emergency' : 'nsg_alert'),
       actions,
       data: data
     });
