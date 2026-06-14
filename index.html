@@ -590,6 +590,19 @@ function connectToServer() {
     updateConnectionStatus(true);
     socket.emit('register', { name: myName, role: myRole });
     if ('serviceWorker' in navigator) requestPushSub();
+    // Procesar alerta pendiente si la app se abrió desde una notificación
+    if (window._pendingSaeAlert) {
+      const pending = window._pendingSaeAlert;
+      window._pendingSaeAlert = null;
+      const id = pending.alertId || pending.id;
+      if (!silencedAlerts.has(id)) {
+        setTimeout(() => {
+          initAudio();
+          showSaeOverlay(pending);
+          playAlarm(pending.type, id);
+        }, 500);
+      }
+    }
   });
 
   socket.on('disconnect', () => {
@@ -1387,12 +1400,24 @@ if ('serviceWorker' in navigator) {
     if (event.data?.type === 'SHOW_SAE' && event.data?.alert) {
       const incoming = event.data.alert;
       const id = incoming.alertId || incoming.id;
-      // FIX: respetar silencedAlerts también para notificaciones push
       if (!silencedAlerts.has(id)) {
-        showSaeOverlay(incoming);
-        playAlarm(incoming.type, id);
+        // Si la app aún no está conectada al servidor, guardar la alerta
+        // y mostrarla en cuanto connectToServer() termine (ver pendingSaeAlert)
+        if (!isConnected) {
+          window._pendingSaeAlert = incoming;
+        } else {
+          initAudio();
+          showSaeOverlay(incoming);
+          playAlarm(incoming.type, id);
+        }
       }
     }
+  });
+
+  // También verificar si hay una notificación pendiente al abrir la app
+  // (el mensaje puede llegar antes de que el listener esté registrado)
+  navigator.serviceWorker.ready.then(reg => {
+    if (reg.active) reg.active.postMessage({ type: 'SW_READY' });
   });
 }
 
