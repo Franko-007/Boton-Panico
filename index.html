@@ -589,7 +589,6 @@ function connectToServer() {
     isConnected = true;
     updateConnectionStatus(true);
     socket.emit('register', { name: myName, role: myRole });
-    if ('serviceWorker' in navigator) requestPushSub();
     // Procesar alerta pendiente si la app se abrió desde una notificación
     if (window._pendingSaeAlert) {
       const pending = window._pendingSaeAlert;
@@ -1446,7 +1445,19 @@ async function clearSWSession() {
   } catch (e) {}
 }
 
+let _pushSubInFlight = null;
 async function requestPushSub() {
+  // Evitar llamadas concurrentes — si ya hay una en curso, esperar esa misma
+  if (_pushSubInFlight) return _pushSubInFlight;
+  _pushSubInFlight = _requestPushSubInner();
+  try {
+    return await _pushSubInFlight;
+  } finally {
+    _pushSubInFlight = null;
+  }
+}
+
+async function _requestPushSubInner() {
   try {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       console.warn('Push no soportado en este navegador');
